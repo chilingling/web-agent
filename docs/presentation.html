@@ -1945,101 +1945,116 @@
         <section>
           <section>
             <h2>04 &nbsp;快速上手</h2>
-            <p class="dim">3 分钟运行起来</p>
+            <p class="dim">四步让你的前端应用变成智能应用</p>
             <aside class="notes">
-              最后一个部分，让我们快速上手。 接下来我会用四个步骤，带大家从零开始把 WebAgent 跑起来，并完成一次完整的 AI
-              操控 Web 应用的流程。
+              最后一个部分，让我们快速上手。 接下来我会用四个步骤，带大家把前端应用接入 WebAgent，完成一次完整的 AI 操控
+              Web 应用的流程。
             </aside>
           </section>
 
           <section>
-            <h3>Step 1: 克隆与安装</h3>
-            <pre><code class="bash"># 克隆仓库
-git clone https://github.com/opentiny/web-agent.git
-cd web-agent
-
-# 安装依赖（项目使用 pnpm）
-pnpm install
-
-# 复制环境变量
-cp example.env .env</code></pre>
+            <h3>Step 1: 安装 NEXT-SDKs</h3>
+            <pre><code class="bash">npm i @opentiny/next-sdk</code></pre>
             <div class="card" style="margin-top: 12px">
-              <h4>环境要求</h4>
-              <p>Node.js ≥ 22 &nbsp;·&nbsp; pnpm ≥ 10</p>
+              <h4>NEXT-SDKs 是什么</h4>
+              <p>前端智能应用开发工具包，简化 WebAgent 的集成与使用</p>
             </div>
             <aside class="notes">
-              第一步，克隆和安装。 先从 GitHub 克隆仓库，然后用 pnpm install 安装依赖。 注意这里有两个环境要求：Node.js
-              22 以上，pnpm 10 以上。 安装完成后，复制 example.env 为
-              .env，根据需要修改配置——大多数情况下默认配置就可以直接使用。
+              第一步，安装 NEXT-SDKs。只需要一条 npm install 命令即可。 NEXT-SDKs
+              是一套前端智能应用开发工具包，提供了简化的 API 封装， 包含 WebMcpClient、WebMcpServer
+              等核心类，帮助开发者快速实现智能化功能。
             </aside>
           </section>
 
           <section>
-            <h3>Step 2: 启动服务</h3>
-            <pre><code class="bash"># 开发模式（热重载）
-pnpm dev
+            <h3>Step 2: 创建 WebMcpClient</h3>
+            <pre><code class="javascript">// App.vue — 在主入口定义 WebMcpClient
+import { onMounted, provide } from 'vue'
+import {
+  WebMcpClient,
+  createMessageChannelPairTransport
+} from '@opentiny/next-sdk'
 
-# 或者生产模式
-pnpm build && pnpm start
+onMounted(async () => {
+  const [serverTransport, clientTransport] =
+    createMessageChannelPairTransport()
+  provide('serverTransport', serverTransport)
 
-# 或者使用 Docker
-pnpm docker:up</code></pre>
-            <pre><code class="bash"># 验证服务状态
-curl http://localhost:3000/health
+  const client = new WebMcpClient()
+  await client.connect(clientTransport)
 
-# 查看已连接的客户端
-curl http://localhost:3000/api/v1/webmcp/list</code></pre>
+  const { sessionId } = await client.connect({
+    agent: true,
+    url: 'https://agent.opentiny.design/api/v1/webmcp-trial/mcp'
+  })
+})</code></pre>
             <aside class="notes">
-              第二步，启动服务。 开发模式下用 pnpm dev，支持热重载，改代码自动重启。 生产模式下先 pnpm build 编译
-              TypeScript，然后 pnpm start 启动。 也可以用 Docker——pnpm docker:up 一键启动。 服务启动后，可以用 curl
-              验证：访问 /health 端点检查服务状态，访问 /api/v1/webmcp/list 查看已连接的客户端列表。
-              如果返回正常响应，说明 WebAgent 已经成功运行了。
+              第二步，在 Web 应用的主入口创建 WebMcpClient 并与 WebAgent 连接。 先用 createMessageChannelPairTransport
+              创建一对 transport， 把 serverTransport provide 出去给子页面用。 然后创建 WebMcpClient，先 connect
+              clientTransport 建立本地通道， 再 connect WebAgent 的 URL——这一步会返回 sessionId，
+              用来唯一标识当前被操控的 Web 应用。
             </aside>
           </section>
 
           <section>
-            <h3>Step 3: 连接业务应用</h3>
-            <pre><code class="javascript">// 在业务应用中集成 @opentiny/next-sdk
-import { createMcpClient } from '@opentiny/next-sdk';
+            <h3>Step 3: 创建 WebMcpServer</h3>
+            <pre><code class="javascript">// views/page1.vue — 在子页面定义 WebMcpServer
+import { onMounted, inject } from 'vue'
+import { WebMcpServer, z } from '@opentiny/next-sdk'
 
-const client = createMcpClient({
-  url: 'http://localhost:3000/api/v1/webmcp/mcp',
-});
+onMounted(async () => {
+  const serverTransport = inject('serverTransport')
+  const server = new WebMcpServer({
+    name: 'mcp-server-page1',
+    version: '1.0.0'
+  })
 
-// 注册 MCP 工具
-client.registerTool('getOrderList', async (params) => {
-  return await fetchOrders(params);
-});
+  server.registerTool(
+    'demo-tool',
+    {
+      title: '演示工具',
+      description: '一个简单工具',
+      inputSchema: { foo: z.string() }
+    },
+    async (params) => {
+      return {
+        content: [{ type: 'text', text: `收到: ${params.foo}` }]
+      }
+    }
+  )
 
-await client.connect();</code></pre>
+  await server.connect(serverTransport)
+})</code></pre>
             <aside class="notes">
-              第三步，在业务应用中集成 SDK。 引入 @opentiny/next-sdk 的 createMcpClient 方法，传入 WebAgent
-              的地址创建客户端。 然后注册你的 MCP 工具——这里的例子是注册一个 getOrderList 工具，当 AI
-              调用这个工具时，会执行 fetchOrders 函数获取订单列表。 最后调用 client.connect() 连接到 WebAgent。
-              连接成功后，你的应用就在 WebAgent 的 clients 列表中注册了，等待 AI 端来操控。
+              第三步，在子页面创建 WebMcpServer 并注册 MCP 工具。 每个页面可以定义自己的 WebMcpServer，页面切换时，MCP
+              Client 会与当前页面的 MCP Server 建立连接。 这里的例子注册了一个 demo-tool 工具，使用 zod schema
+              定义输入参数。 当 AI 调用这个工具时，会执行回调函数并返回结果。 最后 connect serverTransport，这个
+              transport 就是 Step 2 中 provide 出来的。
             </aside>
           </section>
 
           <section>
-            <h3>Step 4: AI 端连接与操控</h3>
-            <pre><code class="javascript">// AI 端 / Remoter 通过 Streamable HTTP 连接到特定客户端
-const response = await fetch(
-  'http://localhost:3000/api/v1/webmcp/mcp?sessionId=目标ID',
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'initialize',
-      params: { ... }
-    })
-  }
-);</code></pre>
+            <h3>Step 4: 引入遥控器</h3>
+            <pre><code class="bash"># 安装遥控器组件
+npm i @opentiny/next-remoter</code></pre>
+            <pre><code class="html"><!-- App.vue -->
+&lt;script setup lang="ts"&gt;
+import { TinyRemoter } from '@opentiny/next-remoter'
+import '@opentiny/next-remoter/dist/style.css'
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;tiny-remoter
+    :session-id="mySessionId"
+    show
+    :fullscreen="fullscreen"
+  /&gt;
+&lt;/template&gt;</code></pre>
             <aside class="notes">
-              第四步，AI 端连接与操控。 AI 端通过 Streamable HTTP 或 SSE 连接到 WebAgent，URL 中带上目标客户端的
-              sessionId。 连接时首先发送 initialize 请求完成 MCP 握手。 握手成功后，AI 就可以像使用普通 MCP Server
-              一样，调用目标应用注册的所有工具。 这里展示的是最原始的 HTTP 调用方式，实际使用中你可以用 MCP SDK
-              封装的客户端来简化代码。 至此，从克隆仓库到完成一次完整的 AI 操控 Web 应用的流程，就完成了。
+              第四步，引入遥控器。安装 @opentiny/next-remoter 组件， 然后在 App.vue 中引入 TinyRemoter 组件，传入 Step 2
+              中获得的 sessionId。 这时前端应用右下角会出现一个图标，就是遥控器的入口。 你可以弹出 AI
+              对话框直接对话，也可以弹出二维码让手机扫码使用。 不管哪种方式，都可以通过自然语言让 AI
+              代替你操作前端应用。 至此，四步就完成了前端应用的智能化改造。
             </aside>
           </section>
 
@@ -2155,7 +2170,9 @@ proxy_read_timeout 86400;</code></pre>
               <p>Express 5 + TypeScript + PM2/Docker 生产部署</p>
             </div>
           </div>
-          <p style="margin-top: 1.5em; font-size: 0.8em"><span class="tag">GitHub</span> opentiny/web-agent</p>
+          <p style="margin-top: 1.5em; font-size: 0.8em">
+            <span class="tag">GitCode</span> https://gitcode.com/opentiny/web-agent
+          </p>
           <aside class="notes">
             总结一下今天的分享。 WebAgent 是什么？——一个 MCP 协议代理枢纽，让 AI Agent 驱动 Web 应用。
             核心机制是什么？——Twin Client 模式 + 双向消息转发 + 多传输层，实现了透明的协议代理。
