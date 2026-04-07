@@ -1,0 +1,2206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebAgent - 智能体代理枢纽服务</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css" />
+    <style>
+      :root {
+        --r-background-color: #f7f8fc;
+        --r-main-font: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+        --r-heading-font: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+        --r-main-color: #333;
+        --r-heading-color: #1a1a2e;
+        --r-link-color: #1476ff;
+        --accent: #1476ff;
+        --accent2: #7c4dff;
+        --accent3: #00c853;
+        --surface: rgba(0, 0, 0, 0.03);
+      }
+      .reveal {
+        font-size: 32px;
+      }
+      .reveal h1 {
+        font-size: 2.2em;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .reveal h2 {
+        font-size: 1.6em;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .reveal h3 {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: var(--accent2);
+      }
+
+      /* 封面样式 */
+      .cover-title {
+        font-size: 2.8em !important;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .cover-sub {
+        font-size: 1.1em;
+        color: #666;
+        margin-top: 0.3em;
+      }
+      .cover-badge {
+        display: inline-block;
+        background: var(--surface);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 20px;
+        padding: 6px 18px;
+        font-size: 0.6em;
+        color: var(--accent);
+        margin-top: 1em;
+      }
+
+      /* 架构图 */
+      .arch-box {
+        background: var(--surface);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        padding: 18px 24px;
+        margin: 8px 0;
+        text-align: center;
+        font-size: 0.85em;
+      }
+      .arch-box.highlight {
+        border-color: var(--accent);
+        box-shadow: 0 0 20px rgba(64, 196, 255, 0.15);
+      }
+      .arch-arrow {
+        font-size: 1.4em;
+        color: var(--accent);
+        margin: 4px 0;
+      }
+
+      /* 卡片网格 */
+      .card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 20px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 10px;
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 0.78em;
+      }
+      .card h4 {
+        margin: 0 0 8px 0;
+        font-size: 1.05em;
+        color: var(--accent);
+      }
+      .card p {
+        margin: 0;
+        line-height: 1.5;
+        color: #666;
+      }
+
+      /* 流程 */
+      .flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+      }
+      .flow-step {
+        background: var(--surface);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 0.75em;
+        white-space: nowrap;
+      }
+      .flow-step.active {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .flow-arrow {
+        color: var(--accent);
+        font-size: 1.2em;
+      }
+
+      /* 代码块 */
+      .reveal pre {
+        box-shadow: none;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .reveal pre code {
+        font-size: 0.7em;
+        line-height: 1.5;
+        padding: 16px !important;
+        max-height: 520px;
+      }
+
+      /* 对比表 */
+      .compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75em;
+        margin-top: 16px;
+      }
+      .compare-table th {
+        background: rgba(64, 196, 255, 0.12);
+        color: var(--accent);
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 2px solid rgba(64, 196, 255, 0.3);
+      }
+      .compare-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        color: #555;
+      }
+      .compare-table tr:hover td {
+        background: rgba(0, 0, 0, 0.03);
+      }
+
+      /* 标签 */
+      .tag {
+        display: inline-block;
+        background: rgba(64, 196, 255, 0.12);
+        color: var(--accent);
+        border-radius: 4px;
+        padding: 2px 10px;
+        font-size: 0.7em;
+        margin: 2px;
+      }
+      .tag.green {
+        background: rgba(105, 240, 174, 0.12);
+        color: var(--accent3);
+      }
+      .tag.purple {
+        background: rgba(179, 136, 255, 0.12);
+        color: var(--accent2);
+      }
+
+      /* 列表 */
+      .reveal ul {
+        list-style: none;
+        padding: 0;
+      }
+      .reveal li {
+        padding: 6px 0 6px 24px;
+        position: relative;
+        font-size: 0.85em;
+      }
+      .reveal li::before {
+        content: '▸';
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+      }
+      .reveal .check-list li::before {
+        content: '✓';
+        color: var(--accent3);
+      }
+      .reveal .cross-list li::before {
+        content: '✗';
+        color: #ff5252;
+      }
+
+      /* ===== SVG 动画基础设施 ===== */
+
+      /* 动画播放状态控制 */
+      .svg-animated .anim-target {
+        animation-play-state: paused;
+      }
+      .svg-animated.svg-playing .anim-target {
+        animation-play-state: running;
+      }
+
+      /* 虚线流动 */
+      @keyframes flowDash {
+        to {
+          stroke-dashoffset: -20;
+        }
+      }
+      @keyframes flowDashReverse {
+        to {
+          stroke-dashoffset: 20;
+        }
+      }
+
+      /* 节点脉冲呼吸 */
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.85;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* 高亮节点脉冲光晕 */
+      @keyframes pulseHighlight {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 4px rgba(20, 118, 255, 0.2));
+        }
+        50% {
+          filter: drop-shadow(0 0 10px rgba(20, 118, 255, 0.5));
+        }
+      }
+
+      /* SVG 公共样式 */
+      .svg-arch {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        overflow: visible;
+      }
+      .svg-arch text {
+        font-family:
+          'PingFang SC',
+          'Microsoft YaHei',
+          -apple-system,
+          sans-serif;
+      }
+      .svg-arch .node-rect {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
+      }
+      .svg-arch .flow-line {
+        fill: none;
+        stroke-dasharray: 6 4;
+        stroke-width: 1.5;
+        animation: flowDash 0.8s linear infinite;
+      }
+      .svg-arch .flow-line-reverse {
+        fill: none;
+        stroke-dasharray: 6 4;
+        stroke-width: 1.5;
+        animation: flowDashReverse 0.8s linear infinite;
+      }
+      .svg-arch .node-pulse {
+        animation: pulse 3s ease-in-out infinite;
+      }
+      .svg-arch .node-highlight {
+        animation: pulseHighlight 2.5s ease-in-out infinite;
+      }
+
+      /* ===== 结束 SVG 动画基础设施 ===== */
+
+      /* 页码 */
+      .reveal .slide-number {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.4);
+        background: transparent;
+        right: auto;
+        left: 16px;
+      }
+
+      /* 分栏 */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+
+      /* 大数字 */
+      .big-num {
+        font-size: 3em;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+      }
+
+      /* 引用 */
+      .quote-box {
+        background: var(--surface);
+        border-left: 4px solid var(--accent);
+        border-radius: 0 10px 10px 0;
+        padding: 16px 24px;
+        margin: 16px 0;
+        font-style: italic;
+        font-size: 0.85em;
+        color: #555;
+      }
+
+      /* 淡化副标题 */
+      .dim {
+        color: #888;
+        font-size: 0.7em;
+      }
+
+      /* Logo */
+      .slide-logo {
+        position: absolute;
+        top: 16px;
+        right: 24px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .slide-logo svg {
+        height: 24px;
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slide-logo">
+        <svg width="163" height="28" viewBox="0 0 163 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M24.89 17.38L29.18 6.27C29.4 5.71 29.94 5.33 30.55 5.33L33.48 5.33C38.25 5.33 42.12 9.24 42.12 14.06C42.12 18.84 38.02 22.66 33.28 22.66L23.47 22.66C23.03 22.66 22.64 22.93 22.5 23.35L21.28 26.8C21.25 26.89 21.32 27 21.42 27L34.03 27C41.05 26.88 46.42 21.16 46.42 14.06C46.42 6.86 40.91 1.01 33.78 1L35.24 1L33.78 1C33.77 1 33.75 1 33.74 1L27.76 1L13 1C5.82 1 0 6.82 0 14C0 21.08 5.67 26.85 12.73 26.99L12.98 27L14.53 27L15.31 27C15.91 27 16.46 26.62 16.68 26.06L18 22.66L12.99 22.66C8.21 22.66 4.33 18.78 4.33 14C4.33 9.21 8.21 5.33 13 5.33L19.23 5.33C19.81 5.2 20.29 4.78 20.5 4.21L21.67 1L27.76 1C27.03 1 26.37 1.45 26.11 2.12L19.89 18.12C19.85 18.22 19.92 18.32 20.02 18.32L23.51 18.31C24.12 18.31 24.67 17.94 24.89 17.38Z"
+            fill="#1476FF"
+            fill-rule="evenodd"
+          />
+          <path
+            d="M131.8 7.32Q132.17 7.53 132.67 7.53Q133.05 7.53 133.36 7.4Q133.46 7.37 133.55 7.32Q133.73 7.22 133.87 7.08Q134.04 6.92 134.17 6.71Q134.24 6.59 134.28 6.47Q134.4 6.17 134.4 5.83Q134.4 5.4 134.22 5.06Q134.1 4.82 133.91 4.63Q133.73 4.46 133.51 4.35Q133.14 4.16 132.67 4.16Q132.16 4.16 131.77 4.38Q131.59 4.48 131.44 4.63Q131.28 4.79 131.17 4.98Q130.96 5.35 130.96 5.83Q130.96 6.31 131.16 6.67Q131.27 6.88 131.44 7.05Q131.61 7.21 131.8 7.32ZM58.92 21.16Q60.78 22.23 63.33 22.23Q65.98 22.23 67.95 21.14Q68.84 20.64 69.55 19.95Q70.39 19.13 70.97 18.03Q72.03 16.02 72.03 13.29Q72.03 10.76 71.06 8.83Q70.54 7.82 69.78 7.04Q69.11 6.35 68.23 5.85Q66.38 4.79 63.82 4.79Q61.13 4.79 59.16 5.89Q58.19 6.42 57.45 7.18Q56.67 7.96 56.13 8.99Q55.08 11 55.08 13.69Q55.08 16.24 56.07 18.17Q56.59 19.18 57.35 19.96Q58.03 20.66 58.92 21.16ZM115.59 7.48L120.85 7.48L120.85 22L123.78 22L123.78 7.48L128.78 7.48L129.05 5.03L115.85 5.03L115.59 7.48ZM66.46 19.12Q65.25 19.91 63.51 19.91Q61.76 19.91 60.57 19.1Q60.54 19.08 60.52 19.07Q60.15 18.8 59.83 18.48Q59.13 17.77 58.73 16.77Q58.14 15.32 58.14 13.48Q58.14 11.73 58.76 10.28Q59.16 9.36 59.8 8.68Q60.17 8.29 60.63 7.97Q60.71 7.91 60.8 7.86Q61.99 7.11 63.65 7.11Q65.51 7.11 66.7 7.96Q67.12 8.27 67.47 8.65Q68.08 9.32 68.42 10.24Q68.96 11.67 68.96 13.5Q68.96 15.36 68.35 16.81Q67.94 17.79 67.25 18.48Q66.91 18.81 66.51 19.08Q66.49 19.1 66.46 19.12ZM75.1 9.35Q75.19 11.04 75.19 12.44L75.19 27.28L78.09 27.03L78.09 21.81Q79.04 22.14 80.02 22.22Q80.32 22.24 80.63 22.24Q82.24 22.24 83.51 21.58Q83.64 21.51 83.77 21.43Q84.07 21.26 84.33 21.05Q85.3 20.28 85.89 19.05Q86.64 17.48 86.64 15.27Q86.64 13.15 85.98 11.77Q85.32 10.39 84.24 9.75Q83.74 9.46 83.2 9.3Q82.58 9.12 81.9 9.12Q81.25 9.12 80.65 9.28Q79.22 9.66 78.03 10.96Q77.97 10.14 77.82 9.35L75.1 9.35ZM91.5 16.04L99.77 16.04L99.77 15.27Q99.77 13.58 99.19 12.19Q98.84 11.35 98.27 10.72Q97.89 10.29 97.41 9.95Q96.21 9.12 94.41 9.12Q92.91 9.12 91.72 9.72Q91.54 9.81 91.37 9.91Q91.07 10.1 90.8 10.32Q89.88 11.06 89.32 12.22Q88.58 13.73 88.58 15.83Q88.58 17.85 89.27 19.28Q89.64 20.02 90.19 20.58Q90.69 21.1 91.35 21.47Q92.74 22.23 94.75 22.23Q97.4 22.23 99.52 21.2L98.89 19.22Q98.03 19.58 97.1 19.8Q96.17 20.01 95.28 20.01Q93.68 20.01 92.76 19.23Q91.61 18.24 91.5 16.04ZM102.49 9.35Q102.58 10.8 102.58 12.57L102.58 22L105.46 22L105.46 13.19Q106.24 12.37 107.03 11.89Q107.49 11.61 107.98 11.49Q108.35 11.4 108.75 11.4Q109.48 11.4 109.95 11.75Q110.77 12.38 110.77 14.1L110.77 22L113.64 22L113.64 13.9Q113.64 11.55 112.62 10.33Q112.33 9.99 111.98 9.74Q111.07 9.12 109.74 9.12Q108.75 9.12 107.95 9.43Q107.16 9.74 106.58 10.2Q106 10.66 105.42 11.32Q105.39 10.93 105.33 10.34Q105.27 9.75 105.19 9.35L102.49 9.35ZM137.75 9.35Q137.84 10.8 137.84 12.57L137.84 22L140.73 22L140.73 13.19Q141.5 12.37 142.3 11.89Q142.75 11.61 143.25 11.49Q143.62 11.4 144.01 11.4Q144.74 11.4 145.21 11.75Q146.03 12.38 146.03 14.1L146.03 22L148.91 22L148.91 13.9Q148.91 11.55 147.89 10.33Q147.6 9.99 147.24 9.74Q146.34 9.12 145 9.12Q144.01 9.12 143.22 9.43Q142.42 9.74 141.85 10.2Q141.27 10.66 140.68 11.32Q140.66 10.93 140.59 10.34Q140.53 9.75 140.46 9.35L137.75 9.35ZM134.12 9.35L131.23 9.35L131.23 22L134.12 22L134.12 9.35ZM151.13 27.17Q151.77 27.28 152.49 27.28Q153.96 27.28 154.99 26.74Q156.03 26.2 156.79 25.09Q157.55 23.98 158.21 22.16L162.86 9.35L159.94 9.35L157.57 16.53Q157.12 17.91 156.79 19.28Q156.63 18.3 156.05 16.48L153.71 9.35L150.6 9.35L155.27 22.1L155.08 22.57Q154.37 24.39 153.14 24.87Q152.7 25.04 152.2 25.04Q151.8 25.04 151.35 24.97Q150.91 24.89 150.62 24.81L150.09 26.92Q150.5 27.06 151.13 27.17ZM96.18 11.93Q96.86 12.69 96.94 14.2L91.58 14.2Q91.8 12.7 92.53 11.94Q92.85 11.61 93.23 11.42Q93.74 11.18 94.37 11.18Q95.12 11.18 95.68 11.51Q95.96 11.68 96.18 11.93ZM82.11 19.58Q81.34 20.1 80.23 20.1Q79.67 20.1 79.1 19.97Q78.52 19.85 78.09 19.64L78.09 12.87Q78.73 12.2 79.45 11.8Q79.72 11.65 80.01 11.55Q80.48 11.4 81.01 11.4Q81.64 11.4 82.14 11.66Q82.6 11.89 82.96 12.36Q83.69 13.31 83.69 15.43Q83.69 17.72 82.81 18.91Q82.5 19.31 82.11 19.58Z"
+            fill="#333"
+            fill-rule="evenodd"
+          />
+        </svg>
+      </div>
+      <div class="slides">
+        <!-- ========== 封面 ========== -->
+        <section data-background-image="cover.png" data-background-size="cover" data-background-position="center">
+          <div style="text-align: left; padding-left: 2em; padding-top: 3em">
+            <p>OpenTiny NEXT 前端智能化系列专题分析</p>
+            <h1>前端智能化最佳实践</h1>
+            <p>WebMCP + WebSkills + WebAgent</p>
+          </div>
+          <!-- 右下角二维码覆盖 -->
+          <div
+            style="position: absolute; bottom: -370px; right: -58px; display: flex; gap: 60px; align-items: flex-end"
+          >
+            <div style="text-align: center">
+              <img src="xiaozhushou.png" style="width: 84px; height: 84px; border-radius: 4px" />
+            </div>
+            <div style="text-align: center">
+              <img src="wechat-subscriber.png" style="width: 84px; height: 84px; border-radius: 4px" />
+            </div>
+          </div>
+          <aside class="notes">
+            大家好，欢迎来到 OpenTiny NEXT 前端智能化系列专题分享。 我是李锦浩，OpenTiny 的前端开发工程师。
+            今天要跟大家聊的主题是「前端智能化最佳实践」，重点围绕三个关键词展开：WebMCP、WebSkills 和 WebAgent。
+            由我来讲解 WebAgent，志超同学来讲解 WebMCP 和 WebSkills。 WebAgent 是整个智能化体系中的代理枢纽服务。
+          </aside>
+        </section>
+
+        <!-- ========== 目录 ========== -->
+        <section>
+          <h2>目录</h2>
+          <div class="card-grid" style="grid-template-columns: 1fr">
+            <div class="card" style="display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center">
+              <span class="big-num" style="font-size: 1.4em">01</span><span>认识 WebAgent</span>
+            </div>
+            <div class="card" style="display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center">
+              <span class="big-num" style="font-size: 1.4em">02</span><span>核心工作机制</span>
+            </div>
+            <div class="card" style="display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center">
+              <span class="big-num" style="font-size: 1.4em">03</span><span>适用场景 &amp; 不适用场景</span>
+            </div>
+            <div class="card" style="display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center">
+              <span class="big-num" style="font-size: 1.4em">04</span><span>快速上手</span>
+            </div>
+          </div>
+          <aside class="notes">
+            WebAgent的分享分为四个部分。 第一部分，我们先来认识 WebAgent，了解它是什么、在整个生态中处于什么位置。
+            第二部分，深入剖析核心工作机制，包括 Twin Client 模式和消息转发桥等关键设计。 第三部分，帮大家厘清 WebAgent
+            适用和不适用的场景，避免错误使用。 第四部分，快速上手指南，手把手教大家 3 分钟跑起来。
+          </aside>
+        </section>
+
+        <!-- ========== Part 1: 认识 WebAgent ========== -->
+        <section>
+          <section>
+            <h2>01 &nbsp;认识 WebAgent</h2>
+            <p class="dim">是什么 · 在哪里 · 怎么定位</p>
+            <aside class="notes">
+              好，我们进入第一部分：认识 WebAgent。 这部分会回答三个问题：WebAgent
+              是什么？它在整个架构中处于什么位置？它和我们熟悉的传统代理有什么区别？
+            </aside>
+          </section>
+
+          <section>
+            <h3>MCP 协议概览</h3>
+            <div class="quote-box">
+              <strong>Model Context Protocol (MCP)</strong> 是 Anthropic 提出的开放协议，<br />
+              定义了 AI 模型 / Agent 与外部工具、资源的标准化交互方式。
+            </div>
+            <svg class="svg-arch svg-animated" viewBox="0 0 900 140" style="margin-top: 20px; max-height: 140px">
+              <defs>
+                <path id="mcp-p1" d="M168,55 L280,55" />
+                <path id="mcp-p2f" d="M418,55 L520,55" />
+                <path id="mcp-p2r" d="M520,55 L418,55" />
+                <path id="mcp-p3" d="M658,55 L740,55" />
+              </defs>
+              <!-- 节点 -->
+              <rect
+                class="node-rect"
+                x="30"
+                y="25"
+                width="138"
+                height="60"
+                rx="10"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="99" y="62" text-anchor="middle" font-size="15" fill="#333" font-weight="600">AI / LLM</text>
+              <rect
+                class="node-rect"
+                x="280"
+                y="25"
+                width="138"
+                height="60"
+                rx="10"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="349" y="62" text-anchor="middle" font-size="15" fill="#1476ff" font-weight="600">
+                MCP Client
+              </text>
+              <rect
+                class="node-rect"
+                x="520"
+                y="25"
+                width="138"
+                height="60"
+                rx="10"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="589" y="62" text-anchor="middle" font-size="15" fill="#1476ff" font-weight="600">
+                MCP Server
+              </text>
+              <rect
+                class="node-rect"
+                x="740"
+                y="25"
+                width="138"
+                height="60"
+                rx="10"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="809" y="62" text-anchor="middle" font-size="15" fill="#333" font-weight="600">
+                Tools / Resources
+              </text>
+              <!-- 连线 -->
+              <line class="flow-line anim-target" x1="168" y1="55" x2="280" y2="55" stroke="#7c4dff" />
+              <line class="flow-line anim-target" x1="418" y1="48" x2="520" y2="48" stroke="#1476ff" />
+              <line class="flow-line-reverse anim-target" x1="418" y1="62" x2="520" y2="62" stroke="#1476ff" />
+              <line class="flow-line anim-target" x1="658" y1="55" x2="740" y2="55" stroke="#00c853" />
+              <!-- 粒子 -->
+              <!-- 箭头标注 -->
+              <text x="224" y="45" text-anchor="middle" font-size="11" fill="#888">→</text>
+              <text x="469" y="38" text-anchor="middle" font-size="11" fill="#888">⇄</text>
+              <text x="699" y="45" text-anchor="middle" font-size="11" fill="#888">→</text>
+              <!-- 底部说明 -->
+              <text x="450" y="120" text-anchor="middle" font-size="12" fill="#888">
+                MCP 解决了 "AI 怎么调用外部能力" 的问题
+              </text>
+            </svg>
+            <aside class="notes">
+              在讲 WebAgent 之前，先快速过一下 MCP 协议。 MCP，全称 Model Context Protocol，是 Anthropic
+              提出的一个开放协议。 它定义了 AI 模型或 Agent 与外部工具和资源之间的标准化交互方式。 简单来说，MCP
+              解决的是「AI 怎么调用外部能力」这个核心问题。 如图所示，整个链路是：AI/LLM 通过 MCP Client 发起请求，MCP
+              Server 接收后调用具体的 Tools 或 Resources。 Client 和 Server 之间使用 JSON-RPC 2.0 进行双向通信。 理解了
+              MCP，我们就能更好地理解 WebAgent 在其中扮演的角色。
+            </aside>
+          </section>
+
+          <section>
+            <h3>定义</h3>
+            <div class="quote-box">
+              WebAgent 是一个开源的 <strong>MCP 代理转发枢纽服务</strong>，<br />
+              它让 AI 智能体（Agent）能够通过 <strong>MCP 协议</strong> 驱动和操控 Web 应用。
+            </div>
+            <div class="card-grid" style="margin-top: 24px">
+              <div class="card">
+                <h4>不是什么</h4>
+                <p>不是一个 AI 模型<br />不是一个 HTTP 反向代理<br />不是一个消息队列</p>
+              </div>
+              <div class="card">
+                <h4>是什么</h4>
+                <p>MCP 协议的中间枢纽<br />Agent ↔ App 的桥梁<br />会话管理 + 消息转发</p>
+              </div>
+            </div>
+            <aside class="notes">
+              那 WebAgent 到底是什么？我们先用排除法来理解。 它不是一个 AI 模型——它本身不做推理和决策； 它不是一个 HTTP
+              反向代理——它不是简单地转发网络流量； 它也不是一个消息队列——它不做消息的持久化和削峰。
+              那它是什么呢？WebAgent 是一个 MCP 协议的中间枢纽服务。 它的核心职责是：在 AI Agent
+              和业务应用之间架起一座桥梁， 通过会话管理和消息转发，让 AI 能够通过标准的 MCP 协议来驱动和操控 Web 应用。
+              这是一个开源项目，大家可以在 GitHub 上找到。
+            </aside>
+          </section>
+
+          <section>
+            <h3>WebAgent 的定位</h3>
+            <p style="font-size: 0.75em; color: #666; margin-bottom: 12px">
+              WebAgent = MCP 代理枢纽，连接 AI 控制端与业务应用
+            </p>
+            <svg class="svg-arch svg-animated" viewBox="0 0 700 420" style="max-height: 400px">
+              <!-- AI 控制端 -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="150"
+                y="20"
+                width="400"
+                height="75"
+                rx="10"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="350" y="50" text-anchor="middle" font-size="16" fill="#333" font-weight="700">
+                AI 控制端 (Remoter)
+              </text>
+              <text x="350" y="72" text-anchor="middle" font-size="12" fill="#888">
+                Claude / GPT / 自定义 Agent / TinyRemoter
+              </text>
+              <!-- WebAgent -->
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="150"
+                y="170"
+                width="400"
+                height="80"
+                rx="10"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="350" y="198" text-anchor="middle" font-size="18" fill="#1476ff" font-weight="700">
+                WebAgent 枢纽服务
+              </text>
+              <text x="350" y="220" text-anchor="middle" font-size="12" fill="#666">
+                会话管理 · 消息转发 · 协议翻译 · 多传输层
+              </text>
+              <text x="350" y="238" text-anchor="middle" font-size="11" fill="#888">@opentiny/agent 引擎驱动</text>
+              <!-- 业务应用 -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="150"
+                y="325"
+                width="400"
+                height="75"
+                rx="10"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="350" y="355" text-anchor="middle" font-size="16" fill="#333" font-weight="700">
+                业务应用 (Client)
+              </text>
+              <text x="350" y="377" text-anchor="middle" font-size="12" fill="#888">
+                集成 @opentiny/next-sdk 的 Web / Desktop / Mobile 应用
+              </text>
+              <!-- 上部连线：Remoter ⇄ WebAgent -->
+              <line class="flow-line anim-target" x1="320" y1="95" x2="320" y2="170" stroke="#7c4dff" />
+              <line class="flow-line-reverse anim-target" x1="380" y1="95" x2="380" y2="170" stroke="#7c4dff" />
+              <text x="410" y="138" font-size="12" fill="#7c4dff" font-weight="600">MCP 协议</text>
+              <!-- 上部粒子 -->
+              <!-- 下部连线：WebAgent ⇄ Client -->
+              <line class="flow-line anim-target" x1="320" y1="250" x2="320" y2="325" stroke="#00c853" />
+              <line class="flow-line-reverse anim-target" x1="380" y1="250" x2="380" y2="325" stroke="#00c853" />
+              <text x="410" y="293" font-size="12" fill="#00c853" font-weight="600">MCP 协议</text>
+              <!-- 下部粒子 -->
+            </svg>
+            <aside class="notes">
+              这张图展示了 WebAgent 的核心定位——它是一个三层架构的中间层。 最上面是 AI 控制端，我们称之为
+              Remoter，可以是 Claude、GPT 或任何支持 MCP 的 AI Agent。 最下面是业务应用端，也就是集成了
+              @opentiny/next-sdk 的 Web、Desktop 或 Mobile 应用。 而 WebAgent
+              就在中间，负责会话管理、消息转发和协议翻译。 注意到上下两条连线都标注了「MCP 协议」，这意味着 WebAgent
+              对上对下都讲 MCP 协议， 但它不是简单地把消息传递过去——后面会详细讲它的 Twin Client 机制。
+            </aside>
+          </section>
+
+          <section>
+            <h3>核心能力</h3>
+            <div class="card-grid">
+              <div class="card">
+                <h4>MCP 代理转发</h4>
+                <p>支持 SSE 和 Streamable HTTP 双传输模式，完整代理 MCP 协议消息</p>
+              </div>
+              <div class="card">
+                <h4>会话管理</h4>
+                <p>为每个连接的应用维护独立会话（Client / Remoter），支持远程控制调试</p>
+              </div>
+              <div class="card">
+                <h4>多协议支持</h4>
+                <p>SSE、Streamable HTTP、WebSocket 三种传输层，适配不同部署场景</p>
+              </div>
+              <div class="card">
+                <h4>生产就绪</h4>
+                <p>健康检查、安全中间件、Winston 日志、PM2 / Docker 部署支持</p>
+              </div>
+            </div>
+            <aside class="notes">
+              WebAgent 提供四大核心能力。 第一，MCP 代理转发。它支持 SSE 和 Streamable HTTP 双传输模式，能完整代理 MCP
+              协议的所有消息类型。 第二，会话管理。每个连接的业务应用和控制端都有独立的会话，支持远程控制和调试。
+              第三，多协议支持。SSE、Streamable HTTP、WebSocket 三种传输层可选，适配不同的部署场景和网络环境。
+              第四，生产就绪。开箱即用的健康检查、Helmet 安全头、Winston 结构化日志、PM2 和 Docker 部署支持——这不是一个
+              Demo 项目，是可以直接上生产的。
+            </aside>
+          </section>
+
+          <section>
+            <h3>OpenTiny NEXT 生态全景</h3>
+            <svg class="svg-arch svg-animated" viewBox="0 0 900 380" style="margin-top: 16px; max-height: 380px">
+              <!-- 左：next-sdk -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="20"
+                y="60"
+                width="240"
+                height="180"
+                rx="10"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="140" y="100" text-anchor="middle" font-size="15" fill="#00c853" font-weight="700">
+                @opentiny/next-sdk
+              </text>
+              <text x="140" y="130" text-anchor="middle" font-size="12" fill="#666">集成到业务应用中</text>
+              <text x="140" y="150" text-anchor="middle" font-size="12" fill="#666">注册 MCP 工具</text>
+              <text x="140" y="170" text-anchor="middle" font-size="12" fill="#666">暴露可操控的能力</text>
+              <!-- 中：WebAgent -->
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="330"
+                y="60"
+                width="240"
+                height="180"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="450" y="100" text-anchor="middle" font-size="15" fill="#1476ff" font-weight="700">WebAgent</text>
+              <text x="450" y="130" text-anchor="middle" font-size="12" fill="#666">代理枢纽服务</text>
+              <text x="450" y="150" text-anchor="middle" font-size="12" fill="#666">管理会话和转发</text>
+              <text x="450" y="170" text-anchor="middle" font-size="12" fill="#666">多传输层支持</text>
+              <!-- 右：next-remoter -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="640"
+                y="60"
+                width="240"
+                height="180"
+                rx="10"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="760" y="100" text-anchor="middle" font-size="15" fill="#7c4dff" font-weight="700">
+                @opentiny/next-remoter
+              </text>
+              <text x="760" y="130" text-anchor="middle" font-size="12" fill="#666">操控端 UI 体验</text>
+              <text x="760" y="150" text-anchor="middle" font-size="12" fill="#666">连接到 WebAgent</text>
+              <text x="760" y="170" text-anchor="middle" font-size="12" fill="#666">向业务应用发指令</text>
+              <!-- 左→中 连线 + 粒子 -->
+              <line class="flow-line anim-target" x1="260" y1="145" x2="330" y2="145" stroke="#00c853" />
+              <text x="295" y="135" text-anchor="middle" font-size="11" fill="#00c853">→</text>
+              <!-- 右→中 连线 + 粒子 -->
+              <line class="flow-line-reverse anim-target" x1="570" y1="155" x2="640" y2="155" stroke="#7c4dff" />
+              <text x="605" y="145" text-anchor="middle" font-size="11" fill="#7c4dff">←</text>
+              <!-- 底部标注 -->
+              <text x="140" y="280" text-anchor="middle" font-size="12" fill="#00c853" font-weight="600">
+                业务应用 + SDK
+              </text>
+              <text x="295" y="280" text-anchor="middle" font-size="14" fill="#1476ff">→</text>
+              <text x="450" y="280" text-anchor="middle" font-size="12" fill="#1476ff" font-weight="600">WebAgent</text>
+              <text x="605" y="280" text-anchor="middle" font-size="14" fill="#7c4dff">←</text>
+              <text x="760" y="280" text-anchor="middle" font-size="12" fill="#7c4dff" font-weight="600">
+                AI / Remoter
+              </text>
+            </svg>
+            <aside class="notes">
+              来看看 WebAgent 在整个 OpenTiny NEXT 生态中的位置。 左边是
+              @opentiny/next-sdk，它集成到业务应用中，负责注册 MCP 工具、暴露可操控的能力。 中间就是今天的主角
+              WebAgent，作为代理枢纽服务，管理会话和转发消息。 右边是 @opentiny/next-remoter，提供操控端的 UI
+              体验，连接到 WebAgent 后向业务应用发送指令。 这三个组件协同工作，构成了完整的 AI 驱动 Web 应用的基础设施。
+              注意箭头方向：SDK 主动连接 WebAgent，Remoter 也主动连接 WebAgent，WebAgent 是被动的枢纽角色。
+            </aside>
+          </section>
+
+          <section>
+            <h3>生态全景图</h3>
+            <p style="font-size: 0.7em; color: #666; margin-bottom: 12px">
+              OpenTiny NEXT 生态中 WebAgent 与 NEXT-SDKs 的位置关系
+            </p>
+            <img
+              src="imgs/home_archi.jpg"
+              alt="OpenTiny NEXT 生态与 WebAgent 位置"
+              style="max-width: 85%; max-height: 480px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)"
+            />
+            <aside class="notes">
+              这是 OpenTiny NEXT 生态的完整全景图。 可以看到 WebAgent 在整个生态中处于中心位置，它是连接 NEXT-SDKs 与 AI
+              控制端的桥梁。 上层是各种 AI 能力的接入，下层是具体的业务应用和 Web 组件。
+              大家可以扫描封面页的二维码获取更详细的生态文档。
+            </aside>
+          </section>
+
+          <section>
+            <h3>与传统代理的区别</h3>
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>HTTP 反向代理<br /><span style="font-size: 0.8em; color: #888">(Nginx / Kong)</span></th>
+                  <th>WebAgent</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>协议</td>
+                  <td>HTTP / TCP</td>
+                  <td>MCP 协议（基于 JSON-RPC 2.0）</td>
+                </tr>
+                <tr>
+                  <td>功能</td>
+                  <td>流量转发 / 负载均衡</td>
+                  <td>会话管理 + 消息路由 + 协议翻译</td>
+                </tr>
+                <tr>
+                  <td>连接模式</td>
+                  <td>请求-响应</td>
+                  <td>SSE 长连接 / Streamable HTTP / WebSocket</td>
+                </tr>
+                <tr>
+                  <td>感知能力</td>
+                  <td>不感知业务逻辑</td>
+                  <td>感知 MCP 方法（tools/call 等）</td>
+                </tr>
+                <tr>
+                  <td>角色</td>
+                  <td>透明代理</td>
+                  <td>孪生客户端 (Twin Client) 模式</td>
+                </tr>
+              </tbody>
+            </table>
+            <aside class="notes">
+              这张表对比了 WebAgent 和传统 HTTP 反向代理的差异。 协议层面，Nginx 处理的是 HTTP/TCP，而 WebAgent 用的是
+              MCP 协议，基于 JSON-RPC 2.0。 功能层面，传统代理做的是流量转发和负载均衡，WebAgent
+              做的是会话管理、消息路由和协议翻译。 连接模式上，传统代理是请求-响应模式，WebAgent 支持 SSE
+              长连接、Streamable HTTP 和 WebSocket。 最关键的一个区别在「感知能力」：传统代理完全不理解业务逻辑，而
+              WebAgent 能感知 MCP 方法——比如 tools/call、resources/read 等。 最后是角色定位：传统代理是透明的，WebAgent
+              则采用了一种独特的「孪生客户端」模式，后面会详细展开。
+            </aside>
+          </section>
+
+          <section>
+            <h3>技术栈一览</h3>
+            <div style="margin-top: 16px">
+              <span class="tag">Express 5</span>
+              <span class="tag">TypeScript</span>
+              <span class="tag purple">@opentiny/agent</span>
+              <span class="tag">MCP SDK</span>
+              <span class="tag green">Helmet</span>
+              <span class="tag green">Winston</span>
+              <span class="tag">UUID</span>
+              <span class="tag">PM2</span>
+              <span class="tag">Docker</span>
+              <span class="tag">Node ≥ 22</span>
+            </div>
+            <pre style="margin-top: 24px"><code class="json">{
+  "dependencies": {
+    "@opentiny/agent": "^0.3.3",   // 核心 MCP 代理引擎
+    "express": "^5.1.0",            // HTTP 框架
+    "helmet": "^7.1.0",             // 安全头
+    "winston": "^3.11.0"            // 日志
+  }
+}</code></pre>
+            <aside class="notes">
+              最后看一下技术栈。 底层框架是 Express 5，语言是 TypeScript。 核心引擎依赖 @opentiny/agent，这是 MCP
+              代理的核心库，封装了 Twin Client、消息路由等核心逻辑。 安全方面用了 Helmet，日志用了 Winston，部署支持 PM2
+              和 Docker。 值得一提的是运行环境要求 Node 22 以上，这是因为项目用到了一些较新的 Node.js 特性。
+              整个依赖非常精简，核心 dependencies 只有四个包，没有引入不必要的复杂性。
+            </aside>
+          </section>
+        </section>
+
+        <!-- ========== Part 2: 核心工作机制 ========== -->
+        <section>
+          <section>
+            <h2>02 &nbsp;核心工作机制</h2>
+            <p class="dim">引擎原理解析</p>
+            <aside class="notes">
+              接下来进入第二部分，也是今天最硬核的部分——核心工作机制。 我会逐步拆解 WebAgent
+              内部的引擎原理，包括四层会话模型、Twin Client 模式、双向消息转发桥等关键设计。 理解了这些机制，你就能明白
+              WebAgent 为什么不是一个简单的消息转发器，而是一个精心设计的协议代理。
+            </aside>
+          </section>
+
+          <!-- 3-1 四层会话模型 -->
+          <section>
+            <h3>四层会话模型</h3>
+            <p style="font-size: 0.7em; color: #666">内部维护四组会话注册表</p>
+            <svg class="svg-arch svg-animated" viewBox="0 0 700 360" style="margin-top: 12px; max-height: 320px">
+              <!-- 中心 WebAgent 标识 -->
+              <circle
+                cx="350"
+                cy="170"
+                r="40"
+                fill="rgba(20,118,255,0.04)"
+                stroke="rgba(20,118,255,0.15)"
+                stroke-dasharray="4 3"
+              />
+              <text x="350" y="166" text-anchor="middle" font-size="10" fill="#1476ff" font-weight="600">Web</text>
+              <text x="350" y="180" text-anchor="middle" font-size="10" fill="#1476ff" font-weight="600">Agent</text>
+              <!-- 上：Transports -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="225"
+                y="10"
+                width="250"
+                height="65"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.4)"
+              />
+              <text x="350" y="35" text-anchor="middle" font-size="15" fill="#1476ff" font-weight="700">
+                Transports
+              </text>
+              <text x="350" y="55" text-anchor="middle" font-size="11" fill="#888">
+                底层传输连接 · SSE / Streamable HTTP / WebSocket
+              </text>
+              <!-- 左：Clients -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="10"
+                y="137"
+                width="220"
+                height="65"
+                rx="10"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.4)"
+              />
+              <text x="120" y="162" text-anchor="middle" font-size="15" fill="#00c853" font-weight="700">Clients</text>
+              <text x="120" y="182" text-anchor="middle" font-size="11" fill="#888">业务应用会话 · Twin Client</text>
+              <!-- 右：Inspectors -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="470"
+                y="137"
+                width="220"
+                height="65"
+                rx="10"
+                fill="rgba(255,167,38,0.06)"
+                stroke="rgba(255,167,38,0.4)"
+              />
+              <text x="580" y="162" text-anchor="middle" font-size="15" fill="#ffab40" font-weight="700">
+                Inspectors
+              </text>
+              <text x="580" y="182" text-anchor="middle" font-size="11" fill="#888">
+                检查器传输层 · 控制端 Transport
+              </text>
+              <!-- 下：Remoters -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="225"
+                y="265"
+                width="250"
+                height="65"
+                rx="10"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.4)"
+              />
+              <text x="350" y="290" text-anchor="middle" font-size="15" fill="#7c4dff" font-weight="700">Remoters</text>
+              <text x="350" y="310" text-anchor="middle" font-size="11" fill="#888">
+                控制端会话 · McpServer + 目标 Client ID
+              </text>
+              <!-- 辐射连线 -->
+              <line class="flow-line anim-target" x1="350" y1="75" x2="350" y2="130" stroke="#1476ff" />
+              <line class="flow-line anim-target" x1="230" y1="170" x2="310" y2="170" stroke="#00c853" />
+              <line class="flow-line anim-target" x1="390" y1="170" x2="470" y2="170" stroke="#ffab40" />
+              <line class="flow-line anim-target" x1="350" y1="210" x2="350" y2="265" stroke="#7c4dff" />
+              <!-- 辐射粒子 -->
+              <!-- 底部说明 -->
+              <text x="350" y="352" text-anchor="middle" font-size="11" fill="#888">
+                每个连接的业务应用和控制端分别在 Clients / Remoters 中拥有独立的 Session
+              </text>
+            </svg>
+            <aside class="notes">
+              WebAgent 内部维护了四组会话注册表，构成了它的四层会话模型。 第一层是
+              Transports——底层传输连接，SSE、Streamable HTTP 或 WebSocket，负责实际的字节传输。 第二层是
+              Clients——业务应用会话，每个连入的业务应用在这里有一个 Twin Client 实例。 第三层是
+              Remoters——控制端会话，每个连入的 AI Agent 或控制端在这里有一个 McpServer 实例。 第四层是
+              Inspectors——检查器传输层，用于控制端的 Transport 管理。 这四层各司其职：Transports 管连接，Clients
+              管被控端，Remoters 管控制端，Inspectors 管控制端的底层传输。 每个连入的应用都有独立的 Session，互不干扰。
+            </aside>
+          </section>
+
+          <!-- 3-2 Twin Client 模式 -->
+          <section>
+            <h3>核心创新：Twin Client（孪生客户端）</h3>
+            <div class="quote-box">
+              WebAgent 不是简单地转发 HTTP 请求，<br />
+              而是为每个连入的业务应用创建一个 <strong>MCP Client 实例</strong>（孪生客户端），<br />
+              拦截并代理所有 MCP 协议交互。
+            </div>
+            <svg class="svg-arch svg-animated" viewBox="0 0 700 310" style="margin-top: 16px; max-height: 280px">
+              <!-- 业务应用 -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="200"
+                y="10"
+                width="300"
+                height="55"
+                rx="10"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="350" y="33" text-anchor="middle" font-size="14" fill="#00c853" font-weight="700">业务应用</text>
+              <text x="350" y="52" text-anchor="middle" font-size="11" fill="#888">
+                通过 SSE / Streamable HTTP 连入 WebAgent
+              </text>
+              <!-- 连线：业务应用 → WebAgent 内部 -->
+              <line class="flow-line anim-target" x1="330" y1="65" x2="330" y2="120" stroke="#00c853" />
+              <line class="flow-line-reverse anim-target" x1="370" y1="65" x2="370" y2="120" stroke="#00c853" />
+              <text x="400" y="96" font-size="11" fill="#00c853" font-weight="600">MCP 协议</text>
+              <!-- WebAgent 虚线框 -->
+              <rect
+                x="100"
+                y="120"
+                width="500"
+                height="130"
+                rx="10"
+                fill="rgba(20,118,255,0.02)"
+                stroke="rgba(20,118,255,0.2)"
+                stroke-dasharray="6 3"
+              />
+              <text x="355" y="140" text-anchor="middle" font-size="10" fill="#1476ff">WebAgent 内部</text>
+              <!-- Twin Client -->
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="120"
+                y="155"
+                width="210"
+                height="75"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="225" y="180" text-anchor="middle" font-size="14" fill="#1476ff" font-weight="700">
+                Twin Client
+              </text>
+              <text x="225" y="198" text-anchor="middle" font-size="10" fill="#666">声明全部 MCP 能力</text>
+              <text x="225" y="213" text-anchor="middle" font-size="10" fill="#666">
+                tools · resources · prompts · sampling
+              </text>
+              <!-- Transport -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="370"
+                y="155"
+                width="210"
+                height="75"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="475" y="180" text-anchor="middle" font-size="14" fill="#1476ff" font-weight="700">
+                Transport
+              </text>
+              <text x="475" y="198" text-anchor="middle" font-size="10" fill="#666">SSEServerTransport 或</text>
+              <text x="475" y="213" text-anchor="middle" font-size="10" fill="#666">StreamableHTTPServerTransport</text>
+              <!-- 绑定连线 -->
+              <line
+                class="flow-line anim-target"
+                x1="330"
+                y1="185"
+                x2="370"
+                y2="185"
+                stroke="#1476ff"
+                stroke-width="2"
+              />
+              <line
+                class="flow-line-reverse anim-target"
+                x1="330"
+                y1="200"
+                x2="370"
+                y2="200"
+                stroke="#1476ff"
+                stroke-width="2"
+              />
+              <!-- 底部说明 -->
+              <text x="350" y="280" text-anchor="middle" font-size="11" fill="#888">
+                Twin Client 接管了标准 MCP Client 的处理器 → 实现协议透传而非本地处理
+              </text>
+            </svg>
+            <aside class="notes">
+              这是 WebAgent 最核心的创新——Twin Client，孪生客户端模式。 这个设计解决了一个关键问题：WebAgent 不能像
+              Nginx 那样简单地做 HTTP 请求转发，因为 MCP 协议是有状态的，需要维护完整的协议握手和能力声明。
+              它的做法是：当一个业务应用通过 SSE 或 Streamable HTTP 连入 WebAgent 时，WebAgent
+              不是简单地记录这个连接，而是为这个应用创建一个完整的 MCP Client 实例。 这个 Client 实例就叫做 Twin
+              Client——孪生客户端。它和业务应用端是「对称」的：应用端认为自己连接的是一个真正的 MCP Server，而实际上是
+              WebAgent 内部的 Twin Client 在代理所有交互。 关键点在于：Twin Client 声明了所有 MCP
+              能力——tools、resources、prompts、sampling——它让应用认为自己连上了一个全功能的 MCP Server。 但实际上，Twin
+              Client 并不真正处理这些请求，而是把它们转发给远端的控制方。这就是「协议透传而非本地处理」。
+            </aside>
+          </section>
+
+          <!-- 3-3 Twin Client 初始化 -->
+          <section>
+            <h3>Twin Client 初始化过程</h3>
+            <p style="font-size: 0.7em; color: #666">三步完成孪生客户端的注入式初始化</p>
+            <svg class="svg-arch svg-animated" viewBox="0 0 750 360" style="margin-top: 12px; max-height: 340px">
+              <!-- Step 1 -->
+              <circle cx="80" cy="45" r="22" fill="rgba(20,118,255,0.12)" stroke="#1476ff" stroke-width="2" />
+              <text x="80" y="51" text-anchor="middle" font-size="16" fill="#1476ff" font-weight="700">1</text>
+              <rect
+                class="node-rect"
+                x="120"
+                y="15"
+                width="600"
+                height="60"
+                rx="10"
+                fill="rgba(20,118,255,0.04)"
+                stroke="rgba(20,118,255,0.15)"
+              />
+              <text x="140" y="40" font-size="14" fill="#1476ff" font-weight="700">清空原有处理器</text>
+              <text x="140" y="60" font-size="11" fill="#888">
+                移除 MCP SDK 默认的请求 / 通知处理器，为注入腾出空间
+              </text>
+              <!-- 连线 1→2 -->
+              <line class="flow-line anim-target" x1="80" y1="67" x2="80" y2="108" stroke="#1476ff" />
+              <!-- Step 2 -->
+              <circle cx="80" cy="130" r="22" fill="rgba(179,136,255,0.12)" stroke="#7c4dff" stroke-width="2" />
+              <text x="80" y="136" text-anchor="middle" font-size="16" fill="#7c4dff" font-weight="700">2</text>
+              <rect
+                class="node-rect"
+                x="120"
+                y="100"
+                width="600"
+                height="60"
+                rx="10"
+                fill="rgba(179,136,255,0.04)"
+                stroke="rgba(179,136,255,0.15)"
+              />
+              <text x="140" y="125" font-size="14" fill="#7c4dff" font-weight="700">注入自定义 initialize 响应</text>
+              <text x="140" y="145" font-size="11" fill="#888">
+                返回全能力声明（tools / resources / prompts / sampling / elicitation），让应用认为连上了完整 MCP Server
+              </text>
+              <!-- 连线 2→3 -->
+              <line class="flow-line anim-target" x1="80" y1="152" x2="80" y2="193" stroke="#7c4dff" />
+              <!-- Step 3 -->
+              <circle cx="80" cy="215" r="22" fill="rgba(105,240,174,0.12)" stroke="#00c853" stroke-width="2" />
+              <text x="80" y="221" text-anchor="middle" font-size="16" fill="#00c853" font-weight="700">3</text>
+              <rect
+                class="node-rect"
+                x="120"
+                y="185"
+                width="600"
+                height="60"
+                rx="10"
+                fill="rgba(105,240,174,0.04)"
+                stroke="rgba(105,240,174,0.15)"
+              />
+              <text x="140" y="210" font-size="14" fill="#00c853" font-weight="700">挂载监听器系统</text>
+              <text x="140" y="230" font-size="11" fill="#888">
+                为 请求 / 响应 / 通知 分别注册监听器链，支持多个 Remoter 同时挂载
+              </text>
+              <!-- 完整流动线（左侧时间线） -->
+              <line class="flow-line anim-target" x1="80" y1="237" x2="80" y2="280" stroke="#00c853" />
+              <!-- 完成标记 -->
+              <text x="80" y="300" text-anchor="middle" font-size="20" fill="#00c853">&#10003;</text>
+              <text x="80" y="320" text-anchor="middle" font-size="11" fill="#888">初始化完成</text>
+            </svg>
+            <aside class="notes">
+              Twin Client 的初始化分三步，我称之为「注入式初始化」。 第一步：清空原有处理器。MCP SDK
+              默认会注册一些请求和通知处理器。Twin Client 首先把这些全部移除，为自定义逻辑腾出空间。 第二步：注入自定义
+              initialize 响应。这一步非常关键——Twin Client 会返回一个「全能力声明」，告诉连接的业务应用：我支持
+              tools、resources、prompts、sampling、elicitation 所有能力。这让应用认为自己连上了一个功能完整的 MCP
+              Server。 第三步：挂载监听器系统。为请求、响应、通知分别注册监听器链。这里有个重要设计：支持多个 Remoter
+              同时挂载到同一个 Twin Client 上，也就是说多个 AI Agent 可以同时观察和操控同一个业务应用。 三步完成后，Twin
+              Client 就准备好了，等待 Remoter 连入后建立消息桥。
+            </aside>
+          </section>
+
+          <!-- 3-4 双向消息转发 -->
+          <section>
+            <h3>双向消息转发桥</h3>
+            <p style="font-size: 0.7em; color: #666">Remoter 连入后，建立 McpServer ⇄ Twin Client 的消息桥</p>
+            <svg class="svg-arch svg-animated" viewBox="0 0 850 320" style="margin-top: 12px; max-height: 300px">
+              <!-- 上层：请求方向 → -->
+              <rect
+                class="node-rect"
+                x="20"
+                y="20"
+                width="170"
+                height="55"
+                rx="10"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="105" y="43" text-anchor="middle" font-size="13" fill="#333" font-weight="700">Remoter</text>
+              <text x="105" y="60" text-anchor="middle" font-size="10" fill="#888">AI / 控制端</text>
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="290"
+                y="20"
+                width="200"
+                height="55"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="390" y="43" text-anchor="middle" font-size="13" fill="#1476ff" font-weight="700">
+                代理 McpServer
+              </text>
+              <text x="390" y="60" text-anchor="middle" font-size="10" fill="#888">拦截请求 → 路由分发</text>
+              <rect
+                class="node-rect"
+                x="590"
+                y="20"
+                width="170"
+                height="55"
+                rx="10"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="675" y="43" text-anchor="middle" font-size="13" fill="#333" font-weight="700">Twin Client</text>
+              <text x="675" y="60" text-anchor="middle" font-size="10" fill="#888">→ 业务应用</text>
+              <!-- 请求连线 + 粒子 -->
+              <line class="flow-line anim-target" x1="190" y1="47" x2="290" y2="47" stroke="#1476ff" />
+              <line class="flow-line anim-target" x1="490" y1="47" x2="590" y2="47" stroke="#1476ff" />
+              <text x="240" y="38" text-anchor="middle" font-size="10" fill="#1476ff">请求 →</text>
+              <text x="540" y="38" text-anchor="middle" font-size="10" fill="#1476ff">转发 →</text>
+              <!-- 中间 tag 区 -->
+              <foreignObject x="120" y="90" width="580" height="35">
+                <div xmlns="http://www.w3.org/1999/xhtml" style="text-align: center; font-size: 12px">
+                  <span class="tag" style="font-size: 0.85em">tools/call</span>
+                  <span class="tag" style="font-size: 0.85em">tools/list</span>
+                  <span class="tag" style="font-size: 0.85em">resources/read</span>
+                  <span class="tag" style="font-size: 0.85em">prompts/get</span>
+                  <span class="tag" style="font-size: 0.85em">completion/complete</span>
+                  <span class="tag" style="font-size: 0.85em">ping</span>
+                </div>
+              </foreignObject>
+              <!-- 下层：响应方向 ← -->
+              <rect
+                class="node-rect"
+                x="20"
+                y="140"
+                width="170"
+                height="55"
+                rx="10"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="105" y="163" text-anchor="middle" font-size="13" fill="#333" font-weight="700">Remoter</text>
+              <text x="105" y="180" text-anchor="middle" font-size="10" fill="#888">收到结果</text>
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="290"
+                y="140"
+                width="200"
+                height="55"
+                rx="10"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="390" y="163" text-anchor="middle" font-size="13" fill="#1476ff" font-weight="700">
+                代理 McpServer
+              </text>
+              <text x="390" y="180" text-anchor="middle" font-size="10" fill="#888">封装 JSON-RPC 响应</text>
+              <rect
+                class="node-rect"
+                x="590"
+                y="140"
+                width="170"
+                height="55"
+                rx="10"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="675" y="163" text-anchor="middle" font-size="13" fill="#333" font-weight="700">Twin Client</text>
+              <text x="675" y="180" text-anchor="middle" font-size="10" fill="#888">← 业务应用</text>
+              <!-- 响应连线 + 粒子 -->
+              <line class="flow-line-reverse anim-target" x1="190" y1="167" x2="290" y2="167" stroke="#00c853" />
+              <line class="flow-line-reverse anim-target" x1="490" y1="167" x2="590" y2="167" stroke="#00c853" />
+              <text x="240" y="160" text-anchor="middle" font-size="10" fill="#00c853">← 回传</text>
+              <text x="540" y="160" text-anchor="middle" font-size="10" fill="#00c853">← 结果</text>
+              <!-- 底部说明 -->
+              <text x="425" y="230" text-anchor="middle" font-size="11" fill="#888">
+                同时还有反向通道：业务应用可主动向 Remoter 发起 roots/list、sampling/createMessage 等请求
+              </text>
+            </svg>
+            <aside class="notes">
+              当 Remoter 连入后，WebAgent 会建立一个双向消息转发桥。 正向流程很直观：Remoter 发起请求，比如
+              tools/call、tools/list、resources/read 等，代理 McpServer 拦截后路由分发，最终由 Twin Client
+              转发给业务应用。业务应用处理完后，结果沿着反方向传回。 但这个桥是双向的——还有一个反向通道。
+              业务应用也可以主动向 Remoter 发起请求，典型的比如 roots/list（请求 AI 端提供根资源列表）或
+              sampling/createMessage（让 AI 生成消息）。 这种双向能力意味着 WebAgent 不仅仅是一个「AI
+              控制应用」的单向管道，而是一个真正的协议级双向桥梁。
+            </aside>
+          </section>
+
+          <!-- 3-5 消息流转全流程 -->
+          <section>
+            <h3>一次 tools/call 的完整旅程</h3>
+            <svg class="svg-arch svg-animated" viewBox="0 0 880 310" style="margin-top: 8px; max-height: 280px">
+              <defs>
+                <!-- U 型完整路径 -->
+                <path
+                  id="upath"
+                  d="M55,40 L255,40 L455,40 L655,40 L790,40 L790,150 L655,150 L455,150 L255,150 L55,150"
+                />
+              </defs>
+              <!-- 上行节点: STEP 1-4 -->
+              <rect
+                class="node-rect"
+                x="15"
+                y="10"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="80" y="28" text-anchor="middle" font-size="9" fill="#7c4dff">STEP 1</text>
+              <text x="80" y="43" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Remoter</text>
+              <text x="80" y="58" text-anchor="middle" font-size="10" fill="#888">发起 tools/call</text>
+
+              <rect
+                class="node-rect"
+                x="195"
+                y="10"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="260" y="28" text-anchor="middle" font-size="9" fill="#1476ff">STEP 2</text>
+              <text x="260" y="43" text-anchor="middle" font-size="12" fill="#333" font-weight="600">McpServer</text>
+              <text x="260" y="58" text-anchor="middle" font-size="10" fill="#888">拦截请求</text>
+
+              <rect
+                class="node-rect"
+                x="385"
+                y="10"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="450" y="28" text-anchor="middle" font-size="9" fill="#1476ff">STEP 3</text>
+              <text x="450" y="43" text-anchor="middle" font-size="12" fill="#333" font-weight="600">请求路由</text>
+              <text x="450" y="58" text-anchor="middle" font-size="10" fill="#888">按 method 分发</text>
+
+              <rect
+                class="node-rect"
+                x="575"
+                y="10"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="640" y="28" text-anchor="middle" font-size="9" fill="#00c853">STEP 4</text>
+              <text x="640" y="43" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Twin Client</text>
+              <text x="640" y="58" text-anchor="middle" font-size="10" fill="#888">callTool()</text>
+
+              <!-- 上行连线 -->
+              <line class="flow-line anim-target" x1="145" y1="40" x2="195" y2="40" stroke="#1476ff" />
+              <line class="flow-line anim-target" x1="325" y1="40" x2="385" y2="40" stroke="#1476ff" />
+              <line class="flow-line anim-target" x1="515" y1="40" x2="575" y2="40" stroke="#00c853" />
+
+              <!-- 下行节点: STEP 5-8 -->
+              <rect
+                class="node-rect"
+                x="575"
+                y="120"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="640" y="138" text-anchor="middle" font-size="9" fill="#00c853">STEP 5</text>
+              <text x="640" y="153" text-anchor="middle" font-size="12" fill="#333" font-weight="600">业务应用</text>
+              <text x="640" y="168" text-anchor="middle" font-size="10" fill="#888">执行工具逻辑</text>
+
+              <rect
+                class="node-rect"
+                x="385"
+                y="120"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="450" y="138" text-anchor="middle" font-size="9" fill="#1476ff">STEP 6</text>
+              <text x="450" y="153" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Transport</text>
+              <text x="450" y="168" text-anchor="middle" font-size="10" fill="#888">回传结果</text>
+
+              <rect
+                class="node-rect"
+                x="195"
+                y="120"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="260" y="138" text-anchor="middle" font-size="9" fill="#1476ff">STEP 7</text>
+              <text x="260" y="153" text-anchor="middle" font-size="12" fill="#333" font-weight="600">McpServer</text>
+              <text x="260" y="168" text-anchor="middle" font-size="10" fill="#888">封装响应</text>
+
+              <rect
+                class="node-rect"
+                x="15"
+                y="120"
+                width="130"
+                height="60"
+                rx="8"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="80" y="138" text-anchor="middle" font-size="9" fill="#7c4dff">STEP 8</text>
+              <text x="80" y="153" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Remoter</text>
+              <text x="80" y="168" text-anchor="middle" font-size="10" fill="#888">收到结果</text>
+
+              <!-- U 型右侧连线 -->
+              <line class="flow-line anim-target" x1="705" y1="70" x2="705" y2="120" stroke="#00c853" />
+              <!-- 下行连线 ← -->
+              <line class="flow-line-reverse anim-target" x1="515" y1="150" x2="575" y2="150" stroke="#00c853" />
+              <line class="flow-line-reverse anim-target" x1="325" y1="150" x2="385" y2="150" stroke="#1476ff" />
+              <line class="flow-line-reverse anim-target" x1="145" y1="150" x2="195" y2="150" stroke="#7c4dff" />
+
+              <!-- U 型粒子（沿完整路径循环） -->
+
+              <!-- 底部说明 -->
+              <text x="440" y="215" text-anchor="middle" font-size="12" fill="#333" font-weight="600">
+                关键设计：McpServer 的请求处理器被替换
+              </text>
+              <text x="440" y="235" text-anchor="middle" font-size="11" fill="#888">
+                不再本地处理，而是按 MCP method 路由给 Twin Client 对应的方法，实现透明代理
+              </text>
+            </svg>
+            <aside class="notes">
+              我们用一次完整的 tools/call 调用来串联整个流程。 Step 1：Remoter（也就是 AI Agent）发起 tools/call 请求。
+              Step 2：WebAgent 内部的代理 McpServer 拦截这个请求。 Step 3：McpServer 按 method
+              名称进行路由分发，识别出这是一个 tools/call。 Step 4：路由到对应的 Twin Client，调用 callTool() 方法。
+              Step 5：Twin Client 把请求通过 Transport 发送给实际的业务应用，业务应用执行工具逻辑。 Step 6：执行结果通过
+              Transport 回传到 Twin Client。 Step 7：McpServer 将结果封装为标准的 JSON-RPC 响应。 Step 8：Remoter
+              收到最终结果。 整个过程对 Remoter 来说完全透明——它以为自己直接在和业务应用通信，但实际上 WebAgent
+              在中间做了完整的协议代理。 这里的关键设计是：McpServer 的请求处理器被替换了，不再本地处理，而是路由给 Twin
+              Client 的对应方法。
+            </aside>
+          </section>
+
+          <!-- 3-6 两种连接模式 -->
+          <section>
+            <h3>两种连接模式</h3>
+            <svg class="svg-arch svg-animated" viewBox="0 0 900 430" style="margin-top: 8px; max-height: 400px">
+              <!-- 左列标题: 应用接入（被控端） -->
+              <rect
+                x="30"
+                y="5"
+                width="380"
+                height="50"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="220" y="25" text-anchor="middle" font-size="14" fill="#00c853" font-weight="700">
+                应用接入（被控端）
+              </text>
+              <text x="220" y="43" text-anchor="middle" font-size="10" fill="#888">
+                不带 sessionId 连入 · 业务应用注册自己，等待被控制
+              </text>
+              <!-- 左列步骤 -->
+              <rect
+                class="node-rect"
+                x="110"
+                y="70"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.25)"
+              />
+              <text x="210" y="94" text-anchor="middle" font-size="12" fill="#333">业务应用连入</text>
+              <line class="flow-line anim-target" x1="210" y1="108" x2="210" y2="128" stroke="#00c853" />
+              <rect
+                class="node-rect"
+                x="110"
+                y="128"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(0,0,0,0.02)"
+                stroke="rgba(0,0,0,0.08)"
+              />
+              <text x="210" y="152" text-anchor="middle" font-size="12" fill="#333">创建 Transport</text>
+              <line class="flow-line anim-target" x1="210" y1="166" x2="210" y2="186" stroke="#00c853" />
+              <rect
+                class="node-rect"
+                x="110"
+                y="186"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="210" y="210" text-anchor="middle" font-size="12" fill="#1476ff" font-weight="600">
+                创建 Twin Client
+              </text>
+              <line class="flow-line anim-target" x1="210" y1="224" x2="210" y2="244" stroke="#1476ff" />
+              <rect
+                class="node-rect"
+                x="110"
+                y="244"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(0,0,0,0.02)"
+                stroke="rgba(0,0,0,0.08)"
+              />
+              <text x="210" y="268" text-anchor="middle" font-size="12" fill="#333">注入处理器 + 连接</text>
+              <line class="flow-line anim-target" x1="210" y1="282" x2="210" y2="302" stroke="#00c853" />
+              <rect
+                class="node-rect"
+                x="110"
+                y="302"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.25)"
+              />
+              <text x="210" y="326" text-anchor="middle" font-size="12" fill="#00c853" font-weight="600">
+                存入 clients[sessionId]
+              </text>
+
+              <!-- 右列标题: 远程控制（控制端） -->
+              <rect
+                x="490"
+                y="5"
+                width="380"
+                height="50"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="680" y="25" text-anchor="middle" font-size="14" fill="#7c4dff" font-weight="700">
+                远程控制（控制端）
+              </text>
+              <text x="680" y="43" text-anchor="middle" font-size="10" fill="#888">
+                带 sessionId 连入 · AI / 控制端接管目标应用
+              </text>
+              <!-- 右列步骤 -->
+              <rect
+                class="node-rect"
+                x="570"
+                y="70"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.25)"
+              />
+              <text x="670" y="94" text-anchor="middle" font-size="12" fill="#333">Remoter 连入 + sessionId</text>
+              <line class="flow-line anim-target" x1="670" y1="108" x2="670" y2="128" stroke="#7c4dff" />
+              <rect
+                class="node-rect"
+                x="570"
+                y="128"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(0,0,0,0.02)"
+                stroke="rgba(0,0,0,0.08)"
+              />
+              <text x="670" y="152" text-anchor="middle" font-size="12" fill="#333">查找目标 Twin Client</text>
+              <line class="flow-line anim-target" x1="670" y1="166" x2="670" y2="186" stroke="#7c4dff" />
+              <rect
+                class="node-rect"
+                x="570"
+                y="186"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(20,118,255,0.06)"
+                stroke="rgba(20,118,255,0.3)"
+              />
+              <text x="670" y="210" text-anchor="middle" font-size="12" fill="#1476ff" font-weight="600">
+                创建代理 McpServer
+              </text>
+              <line class="flow-line anim-target" x1="670" y1="224" x2="670" y2="244" stroke="#1476ff" />
+              <rect
+                class="node-rect"
+                x="570"
+                y="244"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(0,0,0,0.02)"
+                stroke="rgba(0,0,0,0.08)"
+              />
+              <text x="670" y="268" text-anchor="middle" font-size="12" fill="#333">建立双向消息桥</text>
+              <line class="flow-line anim-target" x1="670" y1="282" x2="670" y2="302" stroke="#7c4dff" />
+              <rect
+                class="node-rect"
+                x="570"
+                y="302"
+                width="200"
+                height="38"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.25)"
+              />
+              <text x="670" y="326" text-anchor="middle" font-size="12" fill="#7c4dff" font-weight="600">
+                存入 remoters[sessionId]
+              </text>
+
+              <!-- 中间分隔线 -->
+              <line x1="450" y1="10" x2="450" y2="340" stroke="rgba(0,0,0,0.06)" stroke-dasharray="4 4" />
+            </svg>
+            <aside class="notes">
+              WebAgent 支持两种连接模式，分别对应被控端和控制端。 左边是「应用接入」模式——业务应用不带 sessionId 连入
+              WebAgent。这时 WebAgent 会：创建 Transport、创建 Twin Client、注入处理器并完成连接、最后存入 clients
+              注册表。这个流程就是注册「我是一个可以被控制的应用」。 右边是「远程控制」模式——AI Agent 或控制端带着
+              sessionId 连入。WebAgent 会：查找对应的 Twin Client、为这个 Remoter 创建一个代理
+              McpServer、建立双向消息桥、最后存入 remoters 注册表。 区分这两种模式的关键就是 sessionId：不带 sessionId
+              的是应用接入，带 sessionId 的是远程控制。 这个设计非常优雅——同一个 API 端点，通过有没有 sessionId
+              来区分角色。
+            </aside>
+          </section>
+
+          <!-- 3-7 传输层对比 -->
+          <section>
+            <h3>三种传输层</h3>
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>SSE</th>
+                  <th>Streamable HTTP</th>
+                  <th>WebSocket</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>连接方式</strong></td>
+                  <td>GET 建立长连接<br />POST 发送消息</td>
+                  <td>每次 POST 携带<br />mcp-session-id Header</td>
+                  <td>全双工持久连接</td>
+                </tr>
+                <tr>
+                  <td><strong>会话标识</strong></td>
+                  <td>URL 中的 sessionId<br />参数</td>
+                  <td>mcp-session-id<br />HTTP Header</td>
+                  <td>URL query 中的<br />sessionId</td>
+                </tr>
+                <tr>
+                  <td><strong>初始化触发</strong></td>
+                  <td>GET /sse 时<br />立即创建</td>
+                  <td>首次 POST 中<br />检测 initialize 请求</td>
+                  <td>WebSocket 升级<br />时创建</td>
+                </tr>
+                <tr>
+                  <td><strong>适用场景</strong></td>
+                  <td>浏览器端<br />兼容性最好</td>
+                  <td>无状态 HTTP 环境<br />（Serverless 友好）</td>
+                  <td>低延迟<br />双向通信</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="font-size: 0.65em; color: #888; margin-top: 12px">
+              三种传输层共享同一套 Twin Client + 消息转发机制，仅连接建立方式不同
+            </p>
+            <aside class="notes">
+              WebAgent 支持三种传输层，我们来看它们的差异。 SSE 模式：通过 GET 请求建立长连接，通过 POST
+              发送消息。会话用 URL 中的 sessionId 标识。浏览器兼容性最好，适合大多数 Web 应用场景。 Streamable HTTP
+              模式：每次 POST 请求携带 mcp-session-id Header。对 Serverless
+              环境特别友好，因为不需要维持长连接。初始化是在首次 POST 中检测 initialize 请求时触发的。 WebSocket
+              模式：全双工持久连接，延迟最低，适合需要频繁双向通信的场景。 但最重要的一点是：这三种传输层共享同一套 Twin
+              Client +
+              消息转发机制。也就是说，不管你用哪种传输方式连入，上层的业务逻辑是完全一样的。传输层的选择只影响连接建立方式，不影响功能。
+            </aside>
+          </section>
+
+          <!-- 3-8 全局流程总览 -->
+          <section>
+            <h3>全局流程总览</h3>
+            <svg class="svg-arch svg-animated" viewBox="0 0 920 410" style="margin-top: 6px; max-height: 390px">
+              <!-- ====== 左侧：业务应用 ====== -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="10"
+                y="30"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="92" y="52" text-anchor="middle" font-size="12" fill="#00c853" font-weight="700">业务应用 A</text>
+              <text x="92" y="68" text-anchor="middle" font-size="9" fill="#888">SSE 连接</text>
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="10"
+                y="100"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="92" y="122" text-anchor="middle" font-size="12" fill="#00c853" font-weight="700">
+                业务应用 B
+              </text>
+              <text x="92" y="138" text-anchor="middle" font-size="9" fill="#888">Streamable HTTP</text>
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="10"
+                y="170"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(105,240,174,0.06)"
+                stroke="rgba(105,240,174,0.3)"
+              />
+              <text x="92" y="192" text-anchor="middle" font-size="12" fill="#00c853" font-weight="700">
+                业务应用 C
+              </text>
+              <text x="92" y="208" text-anchor="middle" font-size="9" fill="#888">WebSocket</text>
+
+              <!-- ====== 中间：WebAgent ====== -->
+              <rect
+                class="node-rect anim-target node-highlight"
+                x="270"
+                y="10"
+                width="380"
+                height="230"
+                rx="10"
+                fill="rgba(20,118,255,0.03)"
+                stroke="rgba(20,118,255,0.3)"
+                stroke-width="2"
+              />
+              <text x="460" y="35" text-anchor="middle" font-size="16" fill="#1476ff" font-weight="700">WebAgent</text>
+              <!-- 内部 2x3 grid -->
+              <rect
+                x="290"
+                y="50"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.2)"
+              />
+              <text x="365" y="73" text-anchor="middle" font-size="10" fill="#00c853" font-weight="600">
+                Twin Client A
+              </text>
+              <rect
+                x="480"
+                y="50"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.2)"
+              />
+              <text x="555" y="73" text-anchor="middle" font-size="10" fill="#7c4dff" font-weight="600">
+                McpServer X
+              </text>
+              <rect
+                x="290"
+                y="95"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.2)"
+              />
+              <text x="365" y="118" text-anchor="middle" font-size="10" fill="#00c853" font-weight="600">
+                Twin Client B
+              </text>
+              <rect
+                x="480"
+                y="95"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(179,136,255,0.08)"
+                stroke="rgba(179,136,255,0.2)"
+              />
+              <text x="555" y="118" text-anchor="middle" font-size="10" fill="#7c4dff" font-weight="600">
+                McpServer Y
+              </text>
+              <rect
+                x="290"
+                y="140"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(105,240,174,0.08)"
+                stroke="rgba(105,240,174,0.2)"
+              />
+              <text x="365" y="163" text-anchor="middle" font-size="10" fill="#00c853" font-weight="600">
+                Twin Client C
+              </text>
+              <rect
+                x="480"
+                y="140"
+                width="150"
+                height="35"
+                rx="6"
+                fill="rgba(20,118,255,0.08)"
+                stroke="rgba(20,118,255,0.2)"
+              />
+              <text x="555" y="163" text-anchor="middle" font-size="10" fill="#1476ff" font-weight="600">
+                消息路由层
+              </text>
+              <!-- 内部连线: Twin ↔ McpServer -->
+              <line class="flow-line anim-target" x1="440" y1="67" x2="480" y2="67" stroke="#1476ff" stroke-width="1" />
+              <line
+                class="flow-line anim-target"
+                x1="440"
+                y1="112"
+                x2="480"
+                y2="112"
+                stroke="#1476ff"
+                stroke-width="1"
+              />
+
+              <!-- ====== 右侧：控制端 ====== -->
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="745"
+                y="30"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="827" y="52" text-anchor="middle" font-size="12" fill="#7c4dff" font-weight="700">
+                AI Agent X
+              </text>
+              <text x="827" y="68" text-anchor="middle" font-size="9" fill="#888">操控应用 A</text>
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="745"
+                y="100"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="827" y="122" text-anchor="middle" font-size="12" fill="#7c4dff" font-weight="700">
+                AI Agent Y
+              </text>
+              <text x="827" y="138" text-anchor="middle" font-size="9" fill="#888">操控应用 B</text>
+              <rect
+                class="node-rect anim-target node-pulse"
+                x="745"
+                y="170"
+                width="165"
+                height="50"
+                rx="8"
+                fill="rgba(179,136,255,0.06)"
+                stroke="rgba(179,136,255,0.3)"
+              />
+              <text x="827" y="192" text-anchor="middle" font-size="12" fill="#7c4dff" font-weight="700">
+                MCP Inspector
+              </text>
+              <text x="827" y="208" text-anchor="middle" font-size="9" fill="#888">调试工具</text>
+
+              <!-- ====== 左侧→中间 连线 + 粒子 ====== -->
+              <line class="flow-line anim-target" x1="175" y1="55" x2="270" y2="67" stroke="#00c853" />
+              <line class="flow-line anim-target" x1="175" y1="125" x2="270" y2="112" stroke="#00c853" />
+              <line class="flow-line anim-target" x1="175" y1="195" x2="270" y2="157" stroke="#00c853" />
+
+              <!-- ====== 右侧→中间 连线 + 粒子 ====== -->
+              <line class="flow-line-reverse anim-target" x1="650" y1="67" x2="745" y2="55" stroke="#7c4dff" />
+              <line class="flow-line-reverse anim-target" x1="650" y1="112" x2="745" y2="125" stroke="#7c4dff" />
+              <line class="flow-line-reverse anim-target" x1="650" y1="157" x2="745" y2="195" stroke="#7c4dff" />
+
+              <!-- ====== 底部标注 ====== -->
+              <text x="92" y="260" text-anchor="middle" font-size="11" fill="#888">应用接入（被控端）</text>
+              <text x="460" y="260" text-anchor="middle" font-size="11" fill="#888">
+                按 sessionId 匹配 · 双向消息桥
+              </text>
+              <text x="827" y="260" text-anchor="middle" font-size="11" fill="#888">远程控制（控制端）</text>
+            </svg>
+            <aside class="notes">
+              这是全局流程的总览图，把前面讲的所有概念串在一起。 左边是三个业务应用，分别用 SSE、Streamable HTTP 和
+              WebSocket 连入 WebAgent。 中间的 WebAgent 内部，每个应用对应一个 Twin Client，每个控制端对应一个
+              McpServer，还有一个消息路由层负责分发。 右边是三个控制端——两个 AI Agent 分别操控应用 A 和应用 B，还有一个
+              MCP Inspector 作为调试工具。 核心匹配机制就是 sessionId：每个 Twin Client 有唯一的 sessionId，Remoter
+              通过指定 sessionId 来连接到特定的应用。 双向消息桥确保了所有请求和响应都能准确路由到目标方。 这张图就是
+              WebAgent 运行时的全貌。
+            </aside>
+          </section>
+        </section>
+
+        <!-- ========== Part 3: 适用场景 ========== -->
+        <section>
+          <section>
+            <h2>03 &nbsp;适用场景 &amp; 不适用场景</h2>
+            <p class="dim">找到正确的使用方式</p>
+            <aside class="notes">
+              了解了核心机制之后，我们来聊聊适用场景。 任何技术工具都有它的甜蜜区，也有不擅长的领域。正确使用 WebAgent
+              的前提是理解它适合做什么，不适合做什么。
+            </aside>
+          </section>
+
+          <section>
+            <h3>适合的场景</h3>
+            <ul class="check-list">
+              <li><strong>AI 驱动的 Web 应用</strong> — 通过自然语言操控前端界面、表单、数据展示</li>
+              <li><strong>企业 Agent 基础设施</strong> — 多租户环境下的集中式 MCP 代理枢纽</li>
+              <li><strong>远程控制与监控</strong> — AI / 运维人员远程操控应用状态、读取数据</li>
+              <li><strong>低代码 / 无代码平台</strong> — Agent 驱动的自动化流程编排</li>
+              <li><strong>开发调试</strong> — 通过控制端远程实时调试 MCP 工具注册和调用</li>
+            </ul>
+            <aside class="notes">
+              WebAgent 最适合的场景有五类。 第一，AI 驱动的 Web 应用——这是最典型的场景，用户通过自然语言让 AI
+              来操控前端界面、填写表单、展示数据。 第二，企业 Agent 基础设施——在多租户环境下，WebAgent 可以作为集中式的
+              MCP 代理枢纽，统一管理所有应用和 Agent 的连接。 第三，远程控制与监控——运维人员或 AI
+              可以远程操控应用状态、读取运行时数据，非常适合运营和监控场景。 第四，低代码/无代码平台——Agent
+              驱动的自动化流程编排，让 AI 代替人完成拖拽、配置等操作。 第五，开发调试——在开发阶段，通过控制端实时调试
+              MCP 工具的注册和调用，大幅提升开发效率。
+            </aside>
+          </section>
+
+          <section>
+            <h3>不适合的场景</h3>
+            <ul class="cross-list">
+              <li><strong>简单 HTTP 代理</strong> — 如果不需要 MCP 协议，用 Nginx 即可</li>
+              <li><strong>高频消息队列</strong> — 优化方向是 MCP 会话管理，不是高吞吐量</li>
+              <li><strong>纯同步批处理</strong> — 以流式 / SSE 长连接为核心设计</li>
+              <li><strong>无 MCP 的 Agent</strong> — 依赖 MCP 协议，非 MCP 的 Agent 无法直接使用</li>
+            </ul>
+            <aside class="notes">
+              同样重要的是了解不适合的场景。 如果你只需要简单的 HTTP 代理，不涉及 MCP 协议，用 Nginx 就够了，没必要引入
+              WebAgent。 如果你的场景是高频消息队列，需要高吞吐量，WebAgent 的优化方向是 MCP
+              会话管理，不是消息吞吐量，应该用 Kafka 或 RabbitMQ。 纯同步批处理也不适合——WebAgent 以流式和 SSE
+              长连接为核心设计，不适合批量的同步任务处理。 最后，如果你的 Agent 不支持 MCP 协议，就无法直接使用
+              WebAgent，需要先让 Agent 接入 MCP。
+            </aside>
+          </section>
+
+          <section>
+            <h3>场景举例：AI 操控电商后台</h3>
+            <div style="max-width: 700px; margin: 0 auto">
+              <div
+                class="arch-box"
+                style="background: rgba(179, 136, 255, 0.08); border-color: rgba(179, 136, 255, 0.3)"
+              >
+                <strong>AI Agent</strong><br />
+                <span style="font-size: 0.75em">「帮我把 SKU-1234 的价格调整为 299 元」</span>
+              </div>
+              <div class="arch-arrow">↓ tools/call: updatePrice({ sku, price })</div>
+              <div class="arch-box highlight">
+                <strong>WebAgent</strong><br />
+                <span style="font-size: 0.75em">查找目标应用的 Twin Client → 转发请求</span>
+              </div>
+              <div class="arch-arrow">↓ callTool({ name: "updatePrice", args })</div>
+              <div
+                class="arch-box"
+                style="background: rgba(105, 240, 174, 0.08); border-color: rgba(105, 240, 174, 0.3)"
+              >
+                <strong>电商后台 (Vue + @opentiny/next-sdk)</strong><br />
+                <span style="font-size: 0.75em">执行 updatePrice 工具 → 修改数据库 → 返回结果</span>
+              </div>
+            </div>
+            <aside class="notes">
+              来看一个具体的场景：AI 操控电商后台。 假设运营人员对 AI 说：「帮我把 SKU-1234 的价格调整为 299 元」。 AI
+              Agent 理解意图后，发起一个 tools/call 请求，调用 updatePrice 工具，传入 sku 和 price 参数。 这个请求到达
+              WebAgent，WebAgent 查找目标应用的 Twin Client，把请求转发过去。 电商后台（一个集成了 @opentiny/next-sdk 的
+              Vue 应用）收到请求后，执行 updatePrice 工具逻辑，修改数据库中的价格，然后返回操作结果。
+              整个过程中，运营人员只需要说一句话，AI 通过 MCP 协议和 WebAgent 完成了原本需要手动操作的任务。
+              这就是前端智能化的价值所在。
+            </aside>
+          </section>
+        </section>
+
+        <!-- ========== Part 4: 快速上手 ========== -->
+        <section>
+          <section>
+            <h2>04 &nbsp;快速上手</h2>
+            <p class="dim">3 分钟运行起来</p>
+            <aside class="notes">
+              最后一个部分，让我们快速上手。 接下来我会用四个步骤，带大家从零开始把 WebAgent 跑起来，并完成一次完整的 AI
+              操控 Web 应用的流程。
+            </aside>
+          </section>
+
+          <section>
+            <h3>Step 1: 克隆与安装</h3>
+            <pre><code class="bash"># 克隆仓库
+git clone https://github.com/opentiny/web-agent.git
+cd web-agent
+
+# 安装依赖（项目使用 pnpm）
+pnpm install
+
+# 复制环境变量
+cp example.env .env</code></pre>
+            <div class="card" style="margin-top: 12px">
+              <h4>环境要求</h4>
+              <p>Node.js ≥ 22 &nbsp;·&nbsp; pnpm ≥ 10</p>
+            </div>
+            <aside class="notes">
+              第一步，克隆和安装。 先从 GitHub 克隆仓库，然后用 pnpm install 安装依赖。 注意这里有两个环境要求：Node.js
+              22 以上，pnpm 10 以上。 安装完成后，复制 example.env 为
+              .env，根据需要修改配置——大多数情况下默认配置就可以直接使用。
+            </aside>
+          </section>
+
+          <section>
+            <h3>Step 2: 启动服务</h3>
+            <pre><code class="bash"># 开发模式（热重载）
+pnpm dev
+
+# 或者生产模式
+pnpm build && pnpm start
+
+# 或者使用 Docker
+pnpm docker:up</code></pre>
+            <pre><code class="bash"># 验证服务状态
+curl http://localhost:3000/health
+
+# 查看已连接的客户端
+curl http://localhost:3000/api/v1/webmcp/list</code></pre>
+            <aside class="notes">
+              第二步，启动服务。 开发模式下用 pnpm dev，支持热重载，改代码自动重启。 生产模式下先 pnpm build 编译
+              TypeScript，然后 pnpm start 启动。 也可以用 Docker——pnpm docker:up 一键启动。 服务启动后，可以用 curl
+              验证：访问 /health 端点检查服务状态，访问 /api/v1/webmcp/list 查看已连接的客户端列表。
+              如果返回正常响应，说明 WebAgent 已经成功运行了。
+            </aside>
+          </section>
+
+          <section>
+            <h3>Step 3: 连接业务应用</h3>
+            <pre><code class="javascript">// 在业务应用中集成 @opentiny/next-sdk
+import { createMcpClient } from '@opentiny/next-sdk';
+
+const client = createMcpClient({
+  url: 'http://localhost:3000/api/v1/webmcp/mcp',
+});
+
+// 注册 MCP 工具
+client.registerTool('getOrderList', async (params) => {
+  return await fetchOrders(params);
+});
+
+await client.connect();</code></pre>
+            <aside class="notes">
+              第三步，在业务应用中集成 SDK。 引入 @opentiny/next-sdk 的 createMcpClient 方法，传入 WebAgent
+              的地址创建客户端。 然后注册你的 MCP 工具——这里的例子是注册一个 getOrderList 工具，当 AI
+              调用这个工具时，会执行 fetchOrders 函数获取订单列表。 最后调用 client.connect() 连接到 WebAgent。
+              连接成功后，你的应用就在 WebAgent 的 clients 列表中注册了，等待 AI 端来操控。
+            </aside>
+          </section>
+
+          <section>
+            <h3>Step 4: AI 端连接与操控</h3>
+            <pre><code class="javascript">// AI 端 / Remoter 通过 Streamable HTTP 连接到特定客户端
+const response = await fetch(
+  'http://localhost:3000/api/v1/webmcp/mcp?sessionId=目标ID',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'initialize',
+      params: { ... }
+    })
+  }
+);</code></pre>
+            <aside class="notes">
+              第四步，AI 端连接与操控。 AI 端通过 Streamable HTTP 或 SSE 连接到 WebAgent，URL 中带上目标客户端的
+              sessionId。 连接时首先发送 initialize 请求完成 MCP 握手。 握手成功后，AI 就可以像使用普通 MCP Server
+              一样，调用目标应用注册的所有工具。 这里展示的是最原始的 HTTP 调用方式，实际使用中你可以用 MCP SDK
+              封装的客户端来简化代码。 至此，从克隆仓库到完成一次完整的 AI 操控 Web 应用的流程，就完成了。
+            </aside>
+          </section>
+
+          <section>
+            <h3>核心 API 速查</h3>
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th>端点</th>
+                  <th>方法</th>
+                  <th>功能</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>/api/v1/webmcp/mcp</code></td>
+                  <td>ALL</td>
+                  <td>Streamable HTTP 端点（推荐）</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/sse</code></td>
+                  <td>GET</td>
+                  <td>SSE 连接</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/messages</code></td>
+                  <td>POST</td>
+                  <td>SSE 消息转发</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/list</code></td>
+                  <td>GET</td>
+                  <td>所有客户端会话</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/remoter</code></td>
+                  <td>GET</td>
+                  <td>所有控制端会话</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/tools</code></td>
+                  <td>GET</td>
+                  <td>客户端注册的工具列表</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/ping</code></td>
+                  <td>GET</td>
+                  <td>健康检查 + 会话清理</td>
+                </tr>
+                <tr>
+                  <td><code>/api/v1/webmcp/reset</code></td>
+                  <td>GET</td>
+                  <td>重置所有连接</td>
+                </tr>
+              </tbody>
+            </table>
+            <aside class="notes">
+              这是核心 API 的速查表，大家可以作为参考。 主要关注几个关键端点： /api/v1/webmcp/mcp 是 Streamable HTTP
+              端点，推荐优先使用。 /api/v1/webmcp/sse 和 /messages 是 SSE 模式的连接和消息端点。 /api/v1/webmcp/list
+              可以查看所有已连接的客户端。 /api/v1/webmcp/tools 可以查看客户端注册的工具列表，开发调试时非常有用。 还有
+              /ping 做健康检查和会话清理，/reset 可以重置所有连接。 这些 API 都是 RESTful 风格的，非常直观。
+            </aside>
+          </section>
+
+          <section>
+            <h3>部署选项</h3>
+            <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr">
+              <div class="card">
+                <h4>PM2</h4>
+                <pre style="margin: 8px 0 0"><code class="bash" style="font-size:0.6em;">pnpm build
+pnpm pm2:start
+pm2 logs web-agent</code></pre>
+                <p style="margin-top: 8px">自动重启<br />内存阈值 1GB<br />优雅停机</p>
+              </div>
+              <div class="card">
+                <h4>Docker</h4>
+                <pre style="margin: 8px 0 0"><code class="bash" style="font-size:0.6em;">cp example.env .env
+docker compose up -d --build</code></pre>
+                <p style="margin-top: 8px">多阶段构建<br />非 root 运行<br />健康检查</p>
+              </div>
+              <div class="card">
+                <h4>Nginx + PM2</h4>
+                <pre style="margin: 8px 0 0"><code class="nginx" style="font-size:0.6em;">proxy_buffering off;
+proxy_read_timeout 86400;</code></pre>
+                <p style="margin-top: 8px">SSE 需关闭缓冲<br />长超时配置</p>
+              </div>
+            </div>
+            <aside class="notes">
+              最后介绍三种部署方式。 第一种，PM2 部署：构建后用 PM2 启动，支持自动重启、内存阈值 1GB
+              告警、优雅停机。适合传统服务器部署。 第二种，Docker 部署：使用多阶段构建优化镜像体积，容器以非 root
+              用户运行，内置健康检查。适合容器化环境。 第三种，Nginx +
+              PM2：生产环境推荐方案。但有一个特别需要注意的配置——因为 SSE 需要长连接，所以 Nginx 必须关闭
+              proxy_buffering，同时设置一个足够长的 proxy_read_timeout，比如 86400 秒（24 小时），否则 SSE 连接会被
+              Nginx 超时断开。 这三种方案大家可以根据自己的基础设施选择。
+            </aside>
+          </section>
+        </section>
+
+        <!-- ========== 总结 ========== -->
+        <section>
+          <h2>总结</h2>
+          <div style="max-width: 650px; margin: 0 auto">
+            <div class="card" style="margin: 12px 0; border-color: rgba(64, 196, 255, 0.3)">
+              <h4>WebAgent 是什么</h4>
+              <p>MCP 协议代理枢纽，让 AI Agent 驱动 Web 应用</p>
+            </div>
+            <div class="card" style="margin: 12px 0; border-color: rgba(179, 136, 255, 0.3)">
+              <h4 style="color: var(--accent2)">核心机制</h4>
+              <p>Twin Client 模式 + 双向消息转发 + 多传输层</p>
+            </div>
+            <div class="card" style="margin: 12px 0; border-color: rgba(105, 240, 174, 0.3)">
+              <h4 style="color: var(--accent3)">开箱即用</h4>
+              <p>Express 5 + TypeScript + PM2/Docker 生产部署</p>
+            </div>
+          </div>
+          <p style="margin-top: 1.5em; font-size: 0.8em"><span class="tag">GitHub</span> opentiny/web-agent</p>
+          <aside class="notes">
+            总结一下今天的分享。 WebAgent 是什么？——一个 MCP 协议代理枢纽，让 AI Agent 驱动 Web 应用。
+            核心机制是什么？——Twin Client 模式 + 双向消息转发 + 多传输层，实现了透明的协议代理。
+            能不能直接用？——完全可以，Express 5 + TypeScript + PM2/Docker，开箱即用，生产就绪。 项目已经在 GitHub
+            开源，仓库地址是 opentiny/web-agent，欢迎大家 Star、Fork 和贡献代码。 如果有任何问题，欢迎在 GitHub Issues
+            中提出，或者扫描封面页的二维码加入社区交流。 谢谢大家！ 接下来有请郑志超同学带来 WebMCP、WebSkill
+            的介绍，以及完整的实操演示。
+          </aside>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        slideNumber: 'c/t',
+        width: 1280,
+        height: 720,
+        margin: 0.08,
+        transition: 'slide',
+        transitionSpeed: 'default',
+        backgroundTransition: 'fade',
+        plugins: [RevealHighlight, RevealNotes],
+      });
+
+      /* SVG 动画启停控制 */
+      function activateSvgAnimations(slide) {
+        document.querySelectorAll('.svg-animated').forEach(function (svg) {
+          svg.classList.remove('svg-playing');
+        });
+        if (slide) {
+          slide.querySelectorAll('.svg-animated').forEach(function (svg) {
+            svg.classList.add('svg-playing');
+          });
+        }
+      }
+      Reveal.on('slidechanged', function (event) {
+        activateSvgAnimations(event.currentSlide);
+      });
+      Reveal.on('ready', function (event) {
+        activateSvgAnimations(event.currentSlide);
+      });
+    </script>
+  </body>
+</html>
