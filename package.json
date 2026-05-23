@@ -49,6 +49,7 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "detect-port": "^2.1.0",
     "express": "^5.1.0",
     "helmet": "^7.1.0",
     "uuid": "^13.0.0",
