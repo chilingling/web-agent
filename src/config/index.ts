@@ -6,6 +6,7 @@ interface AppConfig {
     host: string;
     env: 'development' | 'staging' | 'production';
     apiPrefix: string;
+    strictPort: boolean;
   };
   cors: {
     origin: string | string[];
@@ -21,12 +22,23 @@ const corsOrigin = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:300
 // 这样可以同时满足 "*" 的通用性以及 credentials 的要求。
 const corsCredentials = true;
 
+const appEnv = (process.env.NODE_ENV || 'development') as 'development' | 'staging' | 'production';
+
+function parseBooleanEnv(value: string | undefined, defaultValue: boolean): boolean {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return value.toLowerCase() === 'true';
+}
+
 export const config: AppConfig = {
   app: {
     port: parseInt(process.env.AGENT_PORT || '3000', 10),
     host: process.env.AGENT_HOST || '0.0.0.0',
-    env: (process.env.NODE_ENV || 'development') as 'development' | 'staging' | 'production',
+    env: appEnv,
     apiPrefix: APP_API_PREFIX,
+    strictPort: parseBooleanEnv(process.env.AGENT_STRICT_PORT, appEnv === 'production'),
   },
   cors: {
     origin: corsOrigin,

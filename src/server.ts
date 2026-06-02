@@ -1,6 +1,6 @@
-import type { Server } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { Application } from 'express';
-import { detect } from 'detect-port';
+import * as portfinder from 'portfinder';
 import { logger } from './Logger';
 import { createApp } from './app';
 import { config } from './config';
@@ -14,35 +14,66 @@ function isAddressInUseError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && (error as NodeJS.ErrnoException).code === 'EADDRINUSE';
 }
 
+// portfinder（>=1.0.x）在端口范围耗尽时抛出以 "No open ports" 开头的错误。
+// 使用宽松前缀匹配，避免因 portfinder 版本升级导致措辞细微变化而漏捕获。
+function isNoOpenPortError(error: unknown): error is Error {
+  return error instanceof Error && /^No open ports/.test(error.message);
+}
+
 function listenOnce(app: Application, port: number, host: string): Promise<Server> {
+  const server = createServer(app);
+
   return new Promise<Server>((resolve, reject) => {
-    const onError = (error: NodeJS.ErrnoException) => {
+    const cleanup = () => {
       server.off('error', onError);
+      server.off('listening', onListening);
+    };
+    const onError = (error: NodeJS.ErrnoException) => {
+      cleanup();
       reject(error);
     };
-
-    const server = app.listen(port, host, () => {
-      server.off('error', onError);
+    const onListening = () => {
+      cleanup();
       resolve(server);
-    });
+    };
+
     server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port, host);
   });
 }
 
 /**
- * 使用 detect-port 从首选端口开始探测，并启动 HTTP 服务。
+ * 使用 portfinder 从首选端口开始顺序探测，并启动 HTTP 服务。
  *
  * @param app Express 应用实例。
  * @param host 监听地址。
  * @param preferredPort 首选监听端口。
  * @returns 实际启动的 HTTP server 与端口。
- * @throws 当探测或监听过程遇到非端口占用错误时抛出。
+ * @throws 找不到可用端口，或探测、监听过程遇到非端口占用错误时抛出。
  */
-async function listenOnAvailablePort(app: Application, host: string, preferredPort: number): Promise<ListenResult> {
+export async function listenOnAvailablePort(
+  app: Application,
+  host: string,
+  preferredPort: number,
+): Promise<ListenResult> {
   let port = preferredPort;
 
   while (port <= 65535) {
-    const availablePort = await detect({ port, hostname: host });
+    let availablePort: number;
+    try {
+      availablePort = await portfinder.getPortPromise({
+        port,
+        stopPort: 65535,
+        host,
+      });
+    } catch (error) {
+      if (isNoOpenPortError(error)) {
+        break;
+      }
+
+      throw error;
+    }
 
     try {
       return {
@@ -51,6 +82,7 @@ async function listenOnAvailablePort(app: Application, host: string, preferredPo
       };
     } catch (error) {
       // 探测与真实监听之间仍可能出现竞争，端口被抢占时继续尝试下一个端口。
+      // 使用 Math.max 避免因 portfinder 意外返回小于 port 的值时回退导致死循环。
       if (isAddressInUseError(error)) {
         port = Math.max(availablePort + 1, port + 1);
         continue;
@@ -78,9 +110,14 @@ async function startServer() {
     const preferredPort = config.app.port;
     const host = config.app.host;
 
-    const { server, port } = await listenOnAvailablePort(app, host, preferredPort);
+    const { server, port } = config.app.strictPort
+      ? {
+          server: await listenOnce(app, preferredPort, host),
+          port: preferredPort,
+        }
+      : await listenOnAvailablePort(app, host, preferredPort);
 
-    if (port !== preferredPort) {
+    if (!config.app.strictPort && port !== preferredPort) {
       logger.warn(`Configured port ${preferredPort} is in use, using ${port} instead`);
     }
 
